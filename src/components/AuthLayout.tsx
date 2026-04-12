@@ -24,7 +24,7 @@ const AuthLayout: React.FC = () => {
 
       {/* Right Part - Form Section */}
       <div className="w-full md:w-[40%] flex items-center justify-center p-6 md:p-12">
-        <div className="w-full max-w-sm bg-white p-8 md:p-10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 animate-in fade-in zoom-in-95 duration-700">
+        <div className="w-full max-w-sm bg-white p-8 md:p-10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 animate-in fade-in zoom-in-95 duration-700">
           <Outlet />
         </div>
       </div>
