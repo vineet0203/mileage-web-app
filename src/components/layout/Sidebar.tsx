@@ -16,7 +16,7 @@ const NavItem: React.FC<NavItemProps> = ({ href, icon: Icon, label, active }) =>
   <Link
     to={href}
     className={cn(
-      "flex items-center space-x-3 px-4 py-2 rounded-xl transition-all duration-200 group",
+      "flex items-center space-x-3 px-4 py-2 rounded-sm transition-all duration-200 group",
       active
         ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25"
         : "text-slate-400 hover:bg-slate-800 hover:text-white"

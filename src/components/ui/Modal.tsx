@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { Button } from './Button'
 
 interface ModalProps {
   isOpen: boolean
@@ -53,12 +54,14 @@ const Modal: React.FC<ModalProps> = ({
         <div className="px-6 py-4 bg-brand-primary flex items-center justify-between text-white shrink-0">
           <h3 className="text-lg font-bold tracking-tight">{title}</h3>
           {showCloseButton && (
-            <button
+            <Button
               onClick={onClose}
-              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+              variant="outline"
+              size="icon"
+              className="text-white hover:bg-transparent"
             >
               <X className="w-5 h-5" />
-            </button>
+            </Button>
           )}
         </div>
 

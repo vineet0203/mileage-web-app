@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { cn } from '../../lib/utils'
 import DataTable, { type ColumnDef } from '../ui/DataTable'
 import TripDetailsModal from './TripDetailsModal'
+import { Button } from '../ui/Button'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface TrackingRow extends Record<string, unknown> {
@@ -98,18 +99,20 @@ const TrackingTable: React.FC = () => {
         if (status === 'Pending') {
           return (
             <div className="flex items-center gap-1.5">
-              <button
+              <Button
                 onClick={() => handleApprove(row.id)}
-                className="px-3 py-1 bg-brand-primary text-white text-xs font-semibold rounded-xl hover:bg-brand-dark transition-colors"
+                variant="primary"
+                size='sm'
               >
                 Approve
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => handleReject(row.id)}
-                className="px-3 py-1 bg-white border border-slate-200 text-slate-500 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-colors"
+                variant="outline"
+                size='sm'
               >
                 Reject
-              </button>
+              </Button>
             </div>
           )
         }
@@ -131,12 +134,13 @@ const TrackingTable: React.FC = () => {
       accessor: 'id',
       align: 'center',
       render: (_value, row) => (
-        <button
+        <Button
           onClick={() => handleView(row)}
-          className="px-3 py-1 bg-white border border-slate-200 text-slate-500 text-xs font-semibold rounded-xl hover:border-brand-primary hover:text-brand-primary transition-colors"
-        >
+          variant="ghost"
+          size='sm'
+          >
           View
-        </button>
+        </Button>
       ),
     },
   ]
