@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { Eye } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import DataTable, { type ColumnDef } from '../ui/DataTable'
 import TripDetailsModal from './TripDetailsModal'
 
-interface TrackingData {
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface TrackingRow extends Record<string, unknown> {
   id: string
   date: string
   employee: string
@@ -11,105 +12,152 @@ interface TrackingData {
   jobName: string
   totalMileage: number
   amount: string
-  status: 'Approve' | 'Reject' | 'Pending'
+  status: 'Pending' | 'Approved' | 'Rejected'
 }
 
-const mockData: TrackingData[] = [
-  { id: '1', date: '15-02-2026', employee: 'Jhon Smith', employeeImg: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jhon', jobName: 'Ac Repair at Residence', totalMileage: 15, amount: '$30.00', status: 'Approve' },
-  { id: '2', date: '15-02-2026', employee: 'Jhon Smith', employeeImg: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jhon', jobName: 'Ac Repair at Residence', totalMileage: 15, amount: '$30.00', status: 'Approve' },
-  { id: '3', date: '15-02-2026', employee: 'Jhon Smith', employeeImg: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jhon', jobName: 'Ac Repair at Residence', totalMileage: 15, amount: '$30.00', status: 'Approve' },
-  { id: '4', date: '15-02-2026', employee: 'Jhon Smith', employeeImg: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jhon', jobName: 'Ac Repair at Residence', totalMileage: 15, amount: '$30.00', status: 'Approve' },
-  { id: '5', date: '15-02-2026', employee: 'Jhon Smith', employeeImg: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jhon', jobName: 'Ac Repair at Residence', totalMileage: 15, amount: '$30.00', status: 'Approve' },
-  { id: '6', date: '15-02-2026', employee: 'Jhon Smith', employeeImg: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jhon', jobName: 'Ac Repair at Residence', totalMileage: 15, amount: '$30.00', status: 'Approve' },
-  { id: '7', date: '15-02-2026', employee: 'Jhon Smith', employeeImg: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jhon', jobName: 'Ac Repair at Residence', totalMileage: 15, amount: '$30.00', status: 'Approve' },
-  { id: '8', date: '15-02-2026', employee: 'Jhon Smith', employeeImg: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jhon', jobName: 'Ac Repair at Residence', totalMileage: 15, amount: '$30.00', status: 'Approve' },
-]
+// ─── Mock Data (50 rows) ─────────────────────────────────────────────────────
+const ALL_DATA: TrackingRow[] = Array.from({ length: 50 }, (_, i) => ({
+  id: String(i + 1),
+  date: '15-02-2026',
+  employee: 'Jhon Smith',
+  employeeImg: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jhon',
+  jobName: 'Ac Repair at Residence',
+  totalMileage: 15,
+  amount: '$30:00',
+  status: 'Pending' as const,
+}))
 
+// ─── Component ────────────────────────────────────────────────────────────────
 const TrackingTable: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedTrip, setSelectedTrip] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen]   = useState(false)
+  const [selectedTrip, setSelectedTrip] = useState<TrackingRow | null>(null)
 
-  const handleView = (row: any) => {
+  // Per-row approve/reject override
+  const [rowStatuses, setRowStatuses]   = useState<Record<string, TrackingRow['status']>>({})
+
+  const getStatus = (row: TrackingRow): TrackingRow['status'] =>
+    rowStatuses[row.id] ?? row.status
+
+  const handleApprove = (id: string) =>
+    setRowStatuses(prev => ({ ...prev, [id]: 'Approved' }))
+
+  const handleReject = (id: string) =>
+    setRowStatuses(prev => ({ ...prev, [id]: 'Rejected' }))
+
+  const handleView = (row: TrackingRow) => {
     setSelectedTrip(row)
     setIsModalOpen(true)
   }
 
-  return (
-    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
-      <TripDetailsModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-      />
-      <div className="p-8 pb-4">
-        <h3 className="text-xl font-black text-slate-800">Employee Tracking Details</h3>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/50">
-              <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Date</th>
-              <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Employee</th>
-              <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Job Name</th>
-              <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Total Milage</th>
-              <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Amount</th>
-              <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
-              <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {mockData.map((row) => (
-              <tr key={row.id} className="hover:bg-slate-50/30 transition-colors group">
-                <td className="px-8 py-4 text-sm font-semibold text-slate-600">{row.date}</td>
-                <td className="px-8 py-4">
-                  <div className="flex items-center space-x-3">
-                    <img src={row.employeeImg} alt={row.employee} className="w-8 h-8 rounded-full border border-slate-200" />
-                    <span className="text-sm font-bold text-slate-800">{row.employee}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-4 text-sm font-semibold text-slate-600">{row.jobName}</td>
-                <td className="px-8 py-4 text-sm font-bold text-slate-800">{row.totalMileage}</td>
-                <td className="px-8 py-4 text-sm font-bold text-slate-800">{row.amount}</td>
-                <td className="px-8 py-4">
-                  <div className="flex items-center space-x-2">
-                    <button className="px-3 py-1 bg-brand-primary text-white text-[10px] font-black rounded-lg hover:bg-brand-dark transition-colors">Approve</button>
-                    <button className="px-3 py-1 bg-white border border-slate-200 text-brand-primary text-[10px] font-black rounded-lg hover:bg-slate-50 transition-colors">Reject</button>
-                  </div>
-                </td>
-                <td className="px-8 py-4 text-right">
-                  <button 
-                    onClick={() => handleView(row)}
-                    className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-brand-primary/10 hover:text-brand-primary transition-all"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination Container (Simple UI only) */}
-      <div className="p-8 flex items-center justify-between border-t border-slate-50">
-        <p className="text-sm font-bold text-slate-400">Showing 1-5 out of 50 results</p>
-        <div className="flex space-x-2">
-          {[1, 2, 3, 4, 5].map((page) => (
-            <button
-              key={page}
-              className={cn(
-                "w-8 h-8 rounded-lg text-xs font-black transition-all",
-                page === 1
-                  ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25"
-                  : "bg-slate-50 text-slate-400 hover:bg-slate-100"
-              )}
-            >
-              {page}
-            </button>
-          ))}
+  const columns: ColumnDef<TrackingRow>[] = [
+    {
+      key: 'date',
+      header: 'Date',
+      accessor: 'date',
+    },
+    {
+      key: 'employee',
+      header: 'Employee',
+      accessor: 'employee',
+      render: (value, row) => (
+        <div className="flex items-center gap-2.5">
+          <img
+            src={row.employeeImg as string}
+            alt={value as string}
+            className="w-8 h-8 rounded-xl border border-slate-200 bg-slate-100"
+          />
+          <span className="text-sm font-medium text-slate-800 whitespace-nowrap">
+            {value as string}
+          </span>
         </div>
-      </div>
-    </div>
+      ),
+    },
+    {
+      key: 'jobName',
+      header: 'Job Name',
+      accessor: 'jobName',
+    },
+    {
+      key: 'totalMileage',
+      header: 'Total Milage',
+      accessor: 'totalMileage',
+      className: 'font-medium text-slate-800',
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      accessor: 'amount',
+      className: 'font-medium text-slate-800',
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      accessor: 'id',
+      render: (_value, row) => {
+        const status = getStatus(row)
+        if (status === 'Pending') {
+          return (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handleApprove(row.id)}
+                className="px-3 py-1 bg-brand-primary text-white text-xs font-semibold rounded-xl hover:bg-brand-dark transition-colors"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => handleReject(row.id)}
+                className="px-3 py-1 bg-white border border-slate-200 text-slate-500 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-colors"
+              >
+                Reject
+              </button>
+            </div>
+          )
+        }
+        return (
+          <span className={cn(
+            'px-3 py-1 text-xs font-semibold rounded-xl',
+            status === 'Approved'
+              ? 'bg-green-50 text-green-600'
+              : 'bg-red-50 text-red-500',
+          )}>
+            {status}
+          </span>
+        )
+      },
+    },
+    {
+      key: 'action',
+      header: 'Action',
+      accessor: 'id',
+      align: 'center',
+      render: (_value, row) => (
+        <button
+          onClick={() => handleView(row)}
+          className="px-3 py-1 bg-white border border-slate-200 text-slate-500 text-xs font-semibold rounded-xl hover:border-brand-primary hover:text-brand-primary transition-colors"
+        >
+          View
+        </button>
+      ),
+    },
+  ]
+
+  return (
+    <>
+      <TripDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        trip={selectedTrip}
+        onApprove={() => selectedTrip && handleApprove(selectedTrip.id)}
+        onReject={() => selectedTrip && handleReject(selectedTrip.id)}
+      />
+
+      <DataTable<TrackingRow>
+        columns={columns}
+        data={ALL_DATA}
+        title="Employee Tracking Details"
+        pagination={{ pageSize: 8 }}
+      />
+    </>
   )
 }
 

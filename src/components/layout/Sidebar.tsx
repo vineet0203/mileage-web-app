@@ -16,9 +16,9 @@ const NavItem: React.FC<NavItemProps> = ({ href, icon: Icon, label, active }) =>
   <Link
     to={href}
     className={cn(
-      "flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group",
-      active 
-        ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25" 
+      "flex items-center space-x-3 px-4 py-2 rounded-xl transition-all duration-200 group",
+      active
+        ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25"
         : "text-slate-400 hover:bg-slate-800 hover:text-white"
     )}
   >
@@ -40,7 +40,7 @@ const Sidebar: React.FC = () => {
   return (
     <aside className="w-64 bg-slate-950 text-white flex flex-col h-screen sticky top-0">
       {/* Logo */}
-      <div className="p-8">
+      <div className="py-8 px-4">
         <h1 className="text-xl font-black tracking-tight flex items-center gap-3">
           <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center">
             <Map className="w-5 h-5 text-white" />
@@ -63,9 +63,9 @@ const Sidebar: React.FC = () => {
       </nav>
 
       {/* Footer / User Profile */}
-      <div className="p-4 bg-slate-900/50 m-4 rounded-2xl border border-white/5 space-y-4">
-        <Button 
-          variant="ghost" 
+      <div className="p-2 bg-slate-900/50 m-4 rounded-xl border border-white/5 space-y-2">
+        <Button
+          variant="ghost"
           onClick={logout}
           className="w-full text-slate-400 hover:text-white hover:bg-slate-800 justify-start px-3"
         >
