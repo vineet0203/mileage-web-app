@@ -1,5 +1,5 @@
 import React from 'react'
-import { Bell, Search } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { useAuthStore } from '../../store/useAuthStore'
 
 const Header: React.FC = () => {
@@ -18,15 +18,6 @@ const Header: React.FC = () => {
           <Bell className="w-6 h-6 text-slate-500" />
           <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
-
-        <div className="relative group">
-          <input
-            type="text"
-            placeholder="Search here"
-            className="w-64 bg-white border border-slate-200 rounded-xl py-2 pl-4 pr-10 text-sm text-slate-600 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
-          />
-          <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
-        </div>
       </div>
     </header>
   )

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import { MapPin } from 'lucide-react'
+import { MileageRouteIcon } from './ui/Icons'
 
 const AuthLayout: React.FC = () => {
   return (
@@ -12,8 +12,8 @@ const AuthLayout: React.FC = () => {
         <div className="absolute -bottom-40 -left-12 w-80 h-80 border-[1px] border-white/5 rounded-full transition-transform duration-1000 group-hover:scale-105"></div>
         
         <div className="relative z-10 flex flex-col items-center text-center">
-          <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 shadow-2xl border border-white/20 transition-all duration-500 group-hover:rotate-6 group-hover:scale-110">
-            <MapPin className="w-10 h-10 text-white" />
+          <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 shadow-2xl border border-white/20 transition-all duration-300 group-hover:rotate-6 group-hover:scale-110 p-4">
+            <MileageRouteIcon className="w-full h-full text-white" />
           </div>
           <h1 className="text-4xl font-black tracking-tight mb-2 drop-shadow-md">
             Mileage Tracking

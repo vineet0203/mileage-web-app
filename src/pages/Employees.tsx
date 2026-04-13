@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import type { NewEmployeeFormValues } from '../components/employees/AddEmployeeModal'
 import type { ColumnDef } from '../components/ui/DataTable'
 import { Button } from '../components/ui/Button'
 import DataTable from '../components/ui/DataTable'
 import AddEmployeeModal from '../components/employees/AddEmployeeModal'
+import Search from '../components/ui/Search'
 
 interface EmployeeRow extends Record<string, unknown> {
   id: string
@@ -29,12 +30,13 @@ const INITIAL_EMPLOYEES: EmployeeRow[] = Array.from({ length: 16 }, (_, index) =
 }))
 
 const Employees: React.FC = () => {
-  const [rows, setRows] = useState<EmployeeRow[]>(INITIAL_EMPLOYEES)
+  const [employees, setEmployees] = useState<EmployeeRow[]>(INITIAL_EMPLOYEES)
   const [isAddOpen, setIsAddOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const handleAddEmployee = (values: NewEmployeeFormValues) => {
-    const nextId = `#${2300 + rows.length}`
-    setRows(prev => [
+    const nextId = `#${2300 + employees.length}`
+    setEmployees(prev => [
       ...prev,
       {
         id: nextId,
@@ -48,6 +50,17 @@ const Employees: React.FC = () => {
       },
     ])
   }
+
+  const filteredEmployees = useMemo(() => {
+    if (!searchQuery) return employees
+    const q = searchQuery.toLowerCase()
+    return employees.filter(emp => 
+      emp.name.toLowerCase().includes(q) ||
+      emp.email.toLowerCase().includes(q) ||
+      emp.designation.toLowerCase().includes(q) ||
+      emp.id.toLowerCase().includes(q)
+    )
+  }, [employees, searchQuery])
 
   const columns: ColumnDef<EmployeeRow>[] = [
     {
@@ -125,15 +138,31 @@ const Employees: React.FC = () => {
           <p className="mt-2 text-sm text-slate-500">Manage employees, contact details, and reporting assignments.</p>
         </div>
 
-        <Button size="md" className="inline-flex items-center gap-2" onClick={() => setIsAddOpen(true)}>
-          <Plus className="w-4 h-4" />
-          Add Employees
-        </Button>
+        <div className="flex items-center gap-4">
+          <Search 
+            placeholder="Search employees..." 
+            onSearch={setSearchQuery}
+            className="hidden md:flex w-64"
+          />
+          <Button size="md" className="inline-flex items-center gap-2" onClick={() => setIsAddOpen(true)}>
+            <Plus className="w-4 h-4" />
+            Add Employees
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile Search */}
+      <div className="md:hidden">
+        <Search 
+          placeholder="Search employees..." 
+          onSearch={setSearchQuery}
+          className="w-full"
+        />
       </div>
 
       <DataTable<EmployeeRow>
         columns={columns}
-        data={rows}
+        data={filteredEmployees}
         title="Employees"
         pagination={{ pageSize: 8 }}
       />

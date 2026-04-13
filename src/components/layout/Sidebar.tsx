@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Map, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, LogOut } from 'lucide-react'
+import { MileageRouteIcon } from '../ui/Icons'
 import { cn } from '../../lib/utils'
 import { useAuthStore } from '../../store/useAuthStore'
 import { Button } from '../ui/Button'
@@ -34,7 +35,7 @@ const Sidebar: React.FC = () => {
   const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/employees', icon: Users, label: 'Employee Master' },
-    { href: '/routes', icon: Map, label: 'Route Configuration' },
+    { href: '/routes', icon: MileageRouteIcon, label: 'Route Configuration' },
   ]
 
   return (
@@ -42,8 +43,8 @@ const Sidebar: React.FC = () => {
       {/* Logo */}
       <div className="py-8 px-4">
         <h1 className="text-xl font-black tracking-tight flex items-center gap-3">
-          <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center">
-            <Map className="w-5 h-5 text-white" />
+          <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center p-1.5">
+            <MileageRouteIcon className="w-full h-full text-white" />
           </div>
           Mileage Tracking
         </h1>
