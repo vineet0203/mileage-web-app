@@ -10,6 +10,7 @@ import ForgotPasswordForm from './components/auth/ForgotPasswordForm'
 import ResetPasswordForm from './components/auth/ResetPasswordForm'
 import Dashboard from './pages/Dashboard'
 import Employees from './pages/Employees'
+import RouteConfiguration from './pages/RouteConfiguration'
 
 /**
  * Type-safe route definitions for the application.
@@ -67,7 +68,7 @@ export const routes: RouteObject[] = [
           },
           {
             path: 'routes',
-            element: <div className="p-8 text-slate-400 font-bold">Route Configuration - Coming Soon</div>,
+            element: <RouteConfiguration />,
           },
         ],
       },
