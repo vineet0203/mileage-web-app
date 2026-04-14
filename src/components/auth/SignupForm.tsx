@@ -1,17 +1,54 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { User, Mail, Phone, Building2 } from 'lucide-react'
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { User, Mail, Phone, Building2, Lock } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { useSnackbar } from 'notistack'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Select } from '../ui/Select'
+import { authApi } from '../../lib/api/auth'
 
 const SignupForm: React.FC = () => {
+  const [formData, setFormData] = useState({
+    fullname: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: ''
+  })
+  const { enqueueSnackbar } = useSnackbar()
+  const navigate = useNavigate()
+
   const roleOptions = [
     { value: '', label: 'Choose your role' },
-    { value: 'driver', label: 'Driver' },
-    { value: 'fleet_manager', label: 'Fleet Manager' },
-    { value: 'admin', label: 'Administrator' },
+    { value: 'EMPLOYEE', label: 'Employee' },
+    { value: 'EMPLOYER', label: 'Employer' },
+    { value: 'ADMIN', label: 'Administrator' },
   ]
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }))
+  }
+
+  const signupMutation = useMutation({
+    mutationFn: authApi.signup,
+    onSuccess: () => {
+      enqueueSnackbar('Account created successfully. Please check your email for the OTP.', { variant: 'success' })
+      navigate('/verify-email', { state: { email: formData.email } })
+    },
+    onError: (error: any) => {
+      enqueueSnackbar(error.response?.data?.message || 'Signup failed', { variant: 'error' })
+    }
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formData.fullname || !formData.email || !formData.password || !formData.role) {
+      enqueueSnackbar('Please fill in all required fields', { variant: 'warning' })
+      return
+    }
+    signupMutation.mutate(formData)
+  }
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -20,13 +57,15 @@ const SignupForm: React.FC = () => {
         <p className="text-slate-500 text-sm mt-1">Join the community</p>
       </div>
 
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+      <form className="space-y-4" onSubmit={handleSubmit}>
         <Input 
           id="fullname"
           type="text" 
           label="Full Name"
           placeholder="Your names" 
           icon={<User className="w-5 h-5" />}
+          value={formData.fullname}
+          onChange={handleChange}
         />
 
         <Input 
@@ -35,6 +74,8 @@ const SignupForm: React.FC = () => {
           label="Email Address"
           placeholder="Enter email" 
           icon={<Mail className="w-5 h-5" />}
+          value={formData.email}
+          onChange={handleChange}
         />
 
         <Input 
@@ -43,6 +84,18 @@ const SignupForm: React.FC = () => {
           label="Phone Number"
           placeholder="+91 XXXXX XXXXX" 
           icon={<Phone className="w-5 h-5" />}
+          value={formData.phone}
+          onChange={handleChange}
+        />
+        
+        <Input 
+          id="password"
+          type="password" 
+          label="Password"
+          placeholder="••••••••" 
+          icon={<Lock className="w-5 h-5" />}
+          value={formData.password}
+          onChange={handleChange}
         />
 
         <Select 
@@ -50,10 +103,12 @@ const SignupForm: React.FC = () => {
           label="Select Role"
           options={roleOptions}
           icon={<Building2 className="w-5 h-5" />}
+          value={formData.role}
+          onChange={handleChange}
         />
 
-        <Button type="submit" className="w-full mt-4" size="lg">
-          Join Us
+        <Button type="submit" className="w-full mt-4" size="lg" disabled={signupMutation.isPending}>
+          {signupMutation.isPending ? 'Joining...' : 'Join Us'}
         </Button>
       </form>
 

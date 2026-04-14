@@ -1,25 +1,27 @@
 import React, { useState } from 'react'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
-import type { Route } from '../../pages/RouteConfiguration'
+import { useSnackbar } from 'notistack'
 
 interface CreateRouteFormProps {
-  onSubmit: (formData: Omit<Route, 'id'>) => void
+  onSubmit: (formData: { name: string; rate: number; startDestination: string; endDestination: string }) => void
+  isPending?: boolean
 }
 
 interface FormState {
-  title: string
-  startingDestination: string
-  arrivalDestinations: string
-  mileageRate: string
+  name: string
+  rate: string // Using string for input state, will convert to number on submit
+  startDestination: string
+  endDestination: string
 }
 
-const CreateRouteForm: React.FC<CreateRouteFormProps> = ({ onSubmit }) => {
+const CreateRouteForm: React.FC<CreateRouteFormProps> = ({ onSubmit, isPending }) => {
+  const { enqueueSnackbar } = useSnackbar()
   const [formData, setFormData] = useState<FormState>({
-    title: '',
-    startingDestination: '',
-    arrivalDestinations: '',
-    mileageRate: '',
+    name: '',
+    rate: '',
+    startDestination: '',
+    endDestination: '',
   })
 
   const handleChange = (key: keyof FormState, value: string) => {
@@ -28,17 +30,23 @@ const CreateRouteForm: React.FC<CreateRouteFormProps> = ({ onSubmit }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!formData.name || !formData.rate || !formData.startDestination || !formData.endDestination) {
+      enqueueSnackbar('Please fill out all fields', { variant: 'warning' })
+      return
+    }
+    
     onSubmit({
-      title: formData.title,
-      startingDestination: formData.startingDestination,
-      arrivalDestinations: formData.arrivalDestinations,
-      mileageRate: parseFloat(formData.mileageRate) || 0,
+      name: formData.name,
+      rate: parseInt(formData.rate, 10),
+      startDestination: formData.startDestination,
+      endDestination: formData.endDestination,
     })
+    
     setFormData({
-      title: '',
-      startingDestination: '',
-      arrivalDestinations: '',
-      mileageRate: '',
+      name: '',
+      rate: '',
+      startDestination: '',
+      endDestination: '',
     })
   }
 
@@ -51,32 +59,32 @@ const CreateRouteForm: React.FC<CreateRouteFormProps> = ({ onSubmit }) => {
           <Input
             label="Route Title"
             placeholder="Route Title"
-            value={formData.title}
-            onChange={e => handleChange('title', e.target.value)}
+            value={formData.name}
+            onChange={e => handleChange('name', e.target.value)}
           />
           <Input
             label="Mileage Rate"
             placeholder="Mileage Rate"
             type="number"
-            value={formData.mileageRate}
-            onChange={e => handleChange('mileageRate', e.target.value)}
+            value={formData.rate}
+            onChange={e => handleChange('rate', e.target.value)}
           />
           <Input
             label="Starting Destination"
             placeholder="Starting Destination"
-            value={formData.startingDestination}
-            onChange={e => handleChange('startingDestination', e.target.value)}
+            value={formData.startDestination}
+            onChange={e => handleChange('startDestination', e.target.value)}
           />
           <Input
             label="Arrival Destinations"
             placeholder="Arrival Destinations"
-            value={formData.arrivalDestinations}
-            onChange={e => handleChange('arrivalDestinations', e.target.value)}
+            value={formData.endDestination}
+            onChange={e => handleChange('endDestination', e.target.value)}
           />
         </div>
 
-        <Button type="submit" className="w-full">
-          Submit
+        <Button type="submit" className="w-full" disabled={isPending}>
+          {isPending ? 'Creating...' : 'Submit'}
         </Button>
       </form>
     </div>

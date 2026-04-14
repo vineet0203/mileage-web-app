@@ -6,8 +6,10 @@ import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import LoginForm from './components/auth/LoginForm'
 import SignupForm from './components/auth/SignupForm'
+import VerifyOTPForm from './components/auth/VerifyOTPForm'
 import ForgotPasswordForm from './components/auth/ForgotPasswordForm'
 import ResetPasswordForm from './components/auth/ResetPasswordForm'
+import AcceptInviteForm from './components/auth/AcceptInviteForm'
 import Dashboard from './pages/Dashboard'
 import Employees from './pages/Employees'
 import RouteConfiguration from './pages/RouteConfiguration'
@@ -38,12 +40,20 @@ export const routes: RouteObject[] = [
             element: <SignupForm />,
           },
           {
+            path: 'verify-email',
+            element: <VerifyOTPForm />,
+          },
+          {
             path: 'forgot-password',
             element: <ForgotPasswordForm />,
           },
           {
             path: 'reset-password',
             element: <ResetPasswordForm />,
+          },
+          {
+            path: 'accept-invite',
+            element: <AcceptInviteForm />,
           },
         ],
       },

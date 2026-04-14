@@ -1,29 +1,33 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 interface User {
   id: string
-  name: string
+  fullname: string
   email: string
-  avatar?: string
+  role?: string
 }
 
 interface AuthState {
   user: User | null
+  token: string | null
   isAuthenticated: boolean
-  login: (user: User) => void
-  logout: () => void
+  setAuth: (user: User, token: string) => void
+  clearAuth: () => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  // Dummy initial state as requested by user
-  user: {
-    id: '1',
-    name: 'Tanzir Rahman',
-    email: 'tanzir@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tanzir'
-  },
-  isAuthenticated: true,
-  
-  login: (user) => set({ user, isAuthenticated: true }),
-  logout: () => set({ user: null, isAuthenticated: false }),
-}))
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      
+      setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
+      clearAuth: () => set({ user: null, token: null, isAuthenticated: false }),
+    }),
+    {
+      name: 'auth-storage', // saves to localStorage
+    }
+  )
+)

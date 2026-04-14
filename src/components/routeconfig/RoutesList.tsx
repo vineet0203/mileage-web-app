@@ -1,8 +1,8 @@
 import React from "react";
-import type { Route } from "../../pages/RouteConfiguration";
+import type { TravelRoute } from "../../lib/api/routes";
 
 interface RoutesListProps {
-  routes: Route[];
+  routes: TravelRoute[];
 }
 
 const RoutesList: React.FC<RoutesListProps> = ({ routes }) => {
@@ -17,31 +17,34 @@ const RoutesList: React.FC<RoutesListProps> = ({ routes }) => {
       <div className="space-y-3 pr-1">
         {routes.map((route) => (
           <div
-            key={`${route.id}-${route.mileageRate}`}
+            key={route.id}
             className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 transition hover:bg-slate-100"
           >
             {/* Left content */}
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900 truncate">
-                {route.id}
+              <p className="text-sm font-bold text-slate-900 truncate">
+                {route.name}
               </p>
-              <p className="text-xs text-slate-500 truncate mt-0.5">
-                {route.title}
+              <p className="text-xs text-slate-500 truncate mt-0.5 whitespace-normal">
+                {route.start_destination} - {route.end_destination}
               </p>
             </div>
 
-            {/* Right badge */}
-            <div className="ml-3 shrink-0 rounded-full bg-blue-100 px-3 py-1 flex items-center justify-center gap-1 text-black">
-              <span className="text-lg font-medium leading-none">
-                ${route.mileageRate}
-              </span>
-              <span className="text-xs leading-none">Per Mileage</span>
+            {/* Right badge - Showing the rate */}
+            <div className="ml-3 shrink-0 rounded-full bg-blue-100 px-4 py-1.5 flex items-center justify-center gap-1">
+              <span className="text-sm font-black text-slate-900 leading-none">${route.rate}</span>
+              <span className="text-[10px] text-slate-500 leading-none">/Per Mileage</span>
             </div>
           </div>
         ))}
+        
+        {routes.length === 0 && (
+          <p className="text-sm text-slate-500 text-center py-4">No routes found.</p>
+        )}
       </div>
     </div>
   );
 };
 
 export default RoutesList;
+

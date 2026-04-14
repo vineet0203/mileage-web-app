@@ -5,6 +5,8 @@ import { MileageRouteIcon } from '../ui/Icons'
 import { cn } from '../../lib/utils'
 import { useAuthStore } from '../../store/useAuthStore'
 import { Button } from '../ui/Button'
+import { authApi } from '../../lib/api/auth'
+import { useSnackbar } from 'notistack'
 
 interface NavItemProps {
   href: string
@@ -37,7 +39,19 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation()
-  const { user, logout } = useAuthStore()
+  const { user, clearAuth } = useAuthStore()
+  const { enqueueSnackbar } = useSnackbar()
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout()
+    } catch (e) {
+      console.error('Logout API failed', e)
+    } finally {
+      clearAuth()
+      enqueueSnackbar('Logged out', { variant: 'info' })
+    }
+  }
 
   const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -83,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {/* Navigation */}
         <nav className="flex-1 px-4 space-y-2">
           {navItems.map((item) => (
-            <NavItem
+             <NavItem
               key={item.href}
               href={item.href}
               icon={item.icon}
@@ -98,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <div className="p-2 bg-slate-900/50 m-4 rounded-xl border border-white/5 space-y-2">
           <Button
             variant="ghost"
-            onClick={logout}
+            onClick={handleLogout}
             className="w-full text-slate-400 hover:text-white hover:bg-slate-800 justify-start px-3"
           >
             <LogOut className="w-5 h-5 mr-3 rotate-180" />
@@ -106,12 +120,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </Button>
 
           <div className="flex items-center space-x-3 p-2">
-            {user?.avatar && (
-              <img src={user.avatar} alt="avatar" className="w-10 h-10 rounded-xl border border-white/10" />
-            )}
+            <div className="w-10 h-10 rounded-xl bg-brand-secondary flex items-center justify-center overflow-hidden border border-white/10 font-bold text-white">
+              {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
+            </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-bold truncate">{user?.name}</p>
-              <p className="text-[10px] text-slate-500 truncate cursor-pointer hover:text-brand-primary">View profile</p>
+              <p className="text-sm font-bold truncate">{user?.name || user?.email}</p>
+              <p className="text-[10px] text-slate-500 truncate cursor-pointer hover:text-brand-primary capitalize">{user?.role || 'User'}</p>
             </div>
           </div>
         </div>
