@@ -19,7 +19,11 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, label, icon, id, options, ...props }, ref) => {
     return (
       <div className="space-y-2">
-        {label && id && <Label htmlFor={id}>{label}</Label>}
+        {label && (
+          <Label htmlFor={id} required={props.required}>
+            {label}
+          </Label>
+        )}
         <div className="relative group">
           {icon && (
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors pointer-events-none">

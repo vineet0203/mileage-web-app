@@ -21,8 +21,9 @@ const LoginForm: React.FC = () => {
     onSuccess: (data) => {
       enqueueSnackbar('Logged in successfully', { variant: 'success' })
       const user = data.data?.user || data.user
-      const token = data.data?.accessToken || data.data?.token || data.accessToken || data.token
-      setAuth(user, token)
+      const accessToken = data.data?.accessToken || data.accessToken
+      const refreshToken = data.data?.refreshToken || data.refreshToken
+      setAuth(user, accessToken, refreshToken)
       navigate('/dashboard')
     },
     onError: (error: any) => {

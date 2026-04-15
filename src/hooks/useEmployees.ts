@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { employeesApi } from '../lib/api/employees';
 
-export const useEmployees = (search?: string) => {
+export const useEmployees = (search?: string, page: number = 1, limit: number = 10) => {
   return useQuery({
-    queryKey: ['employees', search],
-    queryFn: () => employeesApi.getEmployees(search),
+    queryKey: ['employees', search, page, limit],
+    queryFn: () => employeesApi.getEmployees(search, page, limit),
     select: (data) => data.data,
   });
 };
@@ -27,6 +27,7 @@ export const useInviteEmployee = () => {
     onSuccess: () => {
       enqueueSnackbar('Invitation sent successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['invitations'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (error: any) => {
       enqueueSnackbar(error.response?.data?.message || 'Failed to send invitation', { variant: 'error' });

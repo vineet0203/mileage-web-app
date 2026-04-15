@@ -1,10 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import Modal from "../ui/Modal";
 import { useInviteEmployee, useEmployees } from "../../hooks/useEmployees";
-import { useAuthStore } from "../../store/useAuthStore";
 import { Mail, Building2, User as UserIcon, Briefcase, IdCard, Phone, Users } from "lucide-react";
 
 interface FormState {
@@ -26,11 +25,11 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { user: currentUser } = useAuthStore();
-  const { data: employees } = useEmployees();
+  const { data } = useEmployees();
+  const employees = data?.employees || [];
 
   const managers = useMemo(() => {
-    return employees?.filter(emp => emp.role === 'MANAGER') || [];
+    return employees.filter(emp => emp.role === 'MANAGER' || emp.role === 'ADMIN');
   }, [employees]);
 
   const [formData, setFormData] = useState<FormState>({
@@ -43,18 +42,26 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({
     manager_id: "",
   });
 
+  // Auto-select first manager if current manager_id is empty
+  useEffect(() => {
+    if (managers.length > 0 && !formData.manager_id) {
+      setFormData(prev => ({ ...prev, manager_id: managers[0].id.toString() }));
+    }
+  }, [managers]);
+
   const inviteMutation = useInviteEmployee();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.role) return;
+    if (!formData.email || !formData.fullname || !formData.role) return;
 
     // Send invitation with role and email. 
     inviteMutation.mutate(
       { 
         email: formData.email, 
+        fullname: formData.fullname,
         role: formData.role as 'MANAGER' | 'EMPLOYEE',
-        manager_id: formData.role === 'EMPLOYEE' ? (formData.manager_id || undefined) : undefined
+        manager_id: formData.manager_id || undefined
       },
       {
         onSuccess: () => {
@@ -65,7 +72,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({
             designation: "",
             ssn: "",
             phone: "",
-            manager_id: "",
+            manager_id: managers[0]?.id.toString() || "",
           });
           onClose();
         },
@@ -86,13 +93,19 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({
       className="max-w-2xl"
     >
       <form onSubmit={handleSubmit} className="space-y-6 px-8 py-8">
-        <p className="text-sm text-slate-500">
-          Invite a team member by email. You can pre-fill their profile information below.
-        </p>
+        <div className="space-y-1">
+          <p className="text-sm text-slate-500">
+            Invite a team member by email. You can pre-fill their profile information below.
+          </p>
+          <p className="text-xs text-slate-400 font-medium italic">
+            * Fields marked with asterisks are required
+          </p>
+        </div>
         
         <div className="grid gap-6 md:grid-cols-2">
             <Input
-              label="Email Address *"
+              id="email"
+              label="Email Address"
               placeholder="colleague@company.com"
               type="email"
               icon={<Mail className="w-5 h-5 text-slate-400" />}
@@ -102,15 +115,18 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({
             />
 
             <Input
+              id="fullname"
               label="Full Name"
               placeholder="e.g. Jhon Smith"
               icon={<UserIcon className="w-5 h-5 text-slate-400" />}
               value={formData.fullname}
               onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
+              required
             />
 
             <Select
-              label="Assign Role *"
+              id="role"
+              label="Assign Role"
               options={roleOptions}
               icon={<Building2 className="w-5 h-5 text-slate-400" />}
               value={formData.role}
@@ -118,18 +134,18 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({
               required
             />
 
-            {formData.role === 'EMPLOYEE' && currentUser?.role === 'ADMIN' && (
-              <Select
-                label="Reporting Manager"
-                options={[
-                  { value: '', label: 'None (Reports to Admin)' },
-                  ...managers.map(m => ({ value: m.id.toString(), label: m.fullname }))
-                ]}
-                icon={<Users className="w-5 h-5 text-slate-400" />}
-                value={formData.manager_id}
-                onChange={(e) => setFormData({ ...formData, manager_id: e.target.value })}
-              />
-            )}
+            <Select
+              id="manager_id"
+              label="Reporting Manager"
+              options={managers.map(m => ({ 
+                value: m.id.toString(), 
+                label: `${m.fullname} (${m.email})` 
+              }))}
+              icon={<Users className="w-5 h-5 text-slate-400" />}
+              value={formData.manager_id}
+              onChange={(e) => setFormData({ ...formData, manager_id: e.target.value })}
+              required
+            />
 
             <Input
               label="Designation"
