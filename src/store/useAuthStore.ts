@@ -6,6 +6,12 @@ interface User {
   fullname: string
   email: string
   role?: string
+  designation?: string
+  ssn?: string
+  phone?: string
+  organization_id?: number
+  organization_name?: string
+  manager_id?: number
 }
 
 interface AuthState {

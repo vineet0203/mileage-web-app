@@ -1,92 +1,80 @@
-import React, { useState, useMemo } from 'react'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
-import type { NewEmployeeFormValues } from '../components/employees/AddEmployeeModal'
+import React, { useState } from 'react'
+import { Plus, Pencil, Trash2, User as UserIcon } from 'lucide-react'
 import type { ColumnDef } from '../components/ui/DataTable'
 import { Button } from '../components/ui/Button'
 import DataTable from '../components/ui/DataTable'
 import AddEmployeeModal from '../components/employees/AddEmployeeModal'
+import EmployeeDetailsModal from '../components/employees/EmployeeDetailsModal'
 import Search from '../components/ui/Search'
+import { useEmployees, useDeleteEmployee } from '../hooks/useEmployees'
+import { useAuthStore } from '../store/useAuthStore'
 
 interface EmployeeRow extends Record<string, unknown> {
   id: string
-  name: string
-  avatar: string
-  designation: string
+  fullname: string
   email: string
+  role: string
+  designation: string
   ssn: string
-  manager: string
   phone: string
+  manager_id: number | null
+  manager_name: string | null
+  is_verified: number
+  created_at: string
 }
 
-const INITIAL_EMPLOYEES: EmployeeRow[] = Array.from({ length: 16 }, (_, index) => ({
-  id: `#${2300 + index}`,
-  name: `Jhon Smith ${index + 1}`,
-  avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=Employee-${index + 1}`,
-  designation: 'AC Expert',
-  email: `jhon${54 + index}@gmail.com`,
-  ssn: `158${index}`,
-  manager: 'Dinesh Yadav',
-  phone: `91234567${60 + index}`,
-}))
-
 const Employees: React.FC = () => {
-  const [employees, setEmployees] = useState<EmployeeRow[]>(INITIAL_EMPLOYEES)
+  const { user } = useAuthStore()
   const [isAddOpen, setIsAddOpen] = useState(false)
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeRow | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  
+  const { data: employees, isLoading } = useEmployees(searchQuery)
+  const deleteMutation = useDeleteEmployee()
 
-  const handleAddEmployee = (values: NewEmployeeFormValues) => {
-    const nextId = `#${2300 + employees.length}`
-    setEmployees(prev => [
-      ...prev,
-      {
-        id: nextId,
-        name: `${values.firstName} ${values.lastName}`.trim() || 'New Employee',
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${values.firstName}${values.lastName}`,
-        designation: values.designation || 'N/A',
-        email: values.email || 'N/A',
-        ssn: values.ssn || 'N/A',
-        manager: values.manager || 'N/A',
-        phone: values.phone || 'N/A',
-      },
-    ])
+  const handleDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to remove this employee?')) {
+      deleteMutation.mutate(id)
+    }
   }
 
-  const filteredEmployees = useMemo(() => {
-    if (!searchQuery) return employees
-    const q = searchQuery.toLowerCase()
-    return employees.filter(emp => 
-      emp.name.toLowerCase().includes(q) ||
-      emp.email.toLowerCase().includes(q) ||
-      emp.designation.toLowerCase().includes(q) ||
-      emp.id.toLowerCase().includes(q)
-    )
-  }, [employees, searchQuery])
+  const getManagerDisplay = (row: EmployeeRow) => {
+    if (row.role === 'ADMIN') return 'Itself'
+    if (row.role === 'MANAGER') return 'Admin'
+    return row.manager_name || 'N/A'
+  }
 
   const columns: ColumnDef<EmployeeRow>[] = [
     {
       key: 'id',
       header: 'Emp. ID',
       accessor: 'id',
-      className: 'font-semibold text-slate-800',
+      render: (id:string) => <span className="text-slate-500">#{id}</span>,
       headerClassName: 'w-24',
     },
     {
       key: 'name',
       header: 'Employee Name',
-      accessor: 'name',
-      render: (value, row) => (
+      accessor: 'fullname',
+      render: (value) => (
         <div className="flex items-center gap-3">
-          <img
-            src={row.avatar}
-            alt={value as string}
-            className="w-10 h-10 rounded-full border border-slate-200 bg-slate-100"
-          />
-          <div>
-            <p className="font-medium text-slate-900">{value as string}</p>
-            <p className="text-xs text-slate-400">{row.designation}</p>
+          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 overflow-hidden">
+            <img 
+              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${value}`} 
+              alt="avatar" 
+              className="w-full h-full object-cover"
+            />
           </div>
+          <span className="font-medium text-slate-900">{value as string}</span>
         </div>
       ),
+    },
+    {
+      key: 'designation',
+      header: 'Designation',
+      accessor: 'designation',
+      className: 'text-slate-600 capitalize',
+      render: (value, row) => <span>{(value as string) || row.role?.toLowerCase()}</span>
     },
     {
       key: 'email',
@@ -103,8 +91,10 @@ const Employees: React.FC = () => {
     {
       key: 'manager',
       header: 'Reporting Manager',
-      accessor: 'manager',
-      className: 'text-slate-600',
+      accessor: 'id', // Dummy accessor since we use the whole row in render
+      render: (_, row) => (
+        <span className="text-slate-600">{getManagerDisplay(row)}</span>
+      ),
     },
     {
       key: 'phone',
@@ -117,16 +107,30 @@ const Employees: React.FC = () => {
       header: 'Action',
       accessor: 'id',
       align: 'center',
-      render: () => (
-        <div className="flex items-center justify-center gap-2">
-          <Button variant="ghost" size="icon">
-            <Pencil className="w-4 h-4 text-slate-900" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <Trash2 className="w-4 h-4 text-slate-900" />
-          </Button>
-        </div>
-      ),
+      render: (id, row) => {
+        const canEdit = user?.role === 'ADMIN' || (user?.role === 'MANAGER' && user?.id === row.manager_id)
+        const isSelf = user?.id === id
+
+        return (
+          <div className="flex items-center justify-center gap-2">
+            {(canEdit || isSelf) && (
+              <Button variant="ghost" size="icon" onClick={() => setSelectedEmployee(row)}>
+                <Pencil className="w-4 h-4 text-slate-900" />
+              </Button>
+            )}
+            {user?.role === 'ADMIN' && !isSelf && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleDelete(id as string)}
+                disabled={deleteMutation.isPending}
+              >
+                <Trash2 className="w-4 h-4 text-slate-900" />
+              </Button>
+            )}
+          </div>
+        )
+      },
     },
   ]
 
@@ -134,16 +138,10 @@ const Employees: React.FC = () => {
     <div className="space-y-6 pb-12">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Employee Master</h1>
-          <p className="mt-2 text-sm text-slate-500">Manage employees, contact details, and reporting assignments.</p>
+          <h1 className="text-2xl font-black text-slate-900">Employee Master</h1>
         </div>
 
         <div className="flex items-center gap-4">
-          <Search 
-            placeholder="Search employees..." 
-            onSearch={setSearchQuery}
-            className="hidden md:flex w-64"
-          />
           <Button size="md" className="inline-flex items-center gap-2" onClick={() => setIsAddOpen(true)}>
             <Plus className="w-4 h-4" />
             Add Employees
@@ -151,26 +149,35 @@ const Employees: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Search */}
-      <div className="md:hidden">
-        <Search 
-          placeholder="Search employees..." 
-          onSearch={setSearchQuery}
-          className="w-full"
-        />
-      </div>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-6">
+         <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-slate-900">Employes</h2>
+            <Search 
+              placeholder="Search employees..." 
+              onSearch={setSearchQuery}
+              className="w-full md:max-w-md"
+            />
+         </div>
 
-      <DataTable<EmployeeRow>
-        columns={columns}
-        data={filteredEmployees}
-        title="Employees"
-        pagination={{ pageSize: 8 }}
-      />
+         <DataTable<EmployeeRow>
+            columns={columns}
+            data={employees || []}
+            title=""
+            pagination={{ pageSize: 8 }}
+            isLoading={isLoading}
+            hideHeader // We are using our own header above
+          />
+      </div>
 
       <AddEmployeeModal
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
-        onSubmit={handleAddEmployee}
+      />
+
+      <EmployeeDetailsModal
+        isOpen={!!selectedEmployee}
+        employee={selectedEmployee}
+        onClose={() => setSelectedEmployee(null)}
       />
     </div>
   )

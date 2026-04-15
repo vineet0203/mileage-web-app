@@ -5,28 +5,21 @@ import { useMutation } from '@tanstack/react-query'
 import { useSnackbar } from 'notistack'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
-import { Select } from '../ui/Select'
 import { authApi } from '../../lib/api/auth'
 
 const SignupForm: React.FC = () => {
   const [formData, setFormData] = useState({
     fullname: '',
     email: '',
-    phone: '',
     password: '',
-    role: ''
+    organizationName: '',
+    website: '',
+    phone: '',
   })
   const { enqueueSnackbar } = useSnackbar()
   const navigate = useNavigate()
 
-  const roleOptions = [
-    { value: '', label: 'Choose your role' },
-    { value: 'EMPLOYEE', label: 'Employee' },
-    { value: 'EMPLOYER', label: 'Employer' },
-    { value: 'ADMIN', label: 'Administrator' },
-  ]
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }))
   }
 
@@ -43,26 +36,62 @@ const SignupForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.fullname || !formData.email || !formData.password || !formData.role) {
+    // Required fields: organizationName, fullname, email, password
+    if (!formData.fullname || !formData.email || !formData.password || !formData.organizationName) {
       enqueueSnackbar('Please fill in all required fields', { variant: 'warning' })
       return
     }
-    signupMutation.mutate(formData)
+    
+    // Role is now ADMIN by default for account creators
+    signupMutation.mutate({
+      ...formData,
+      role: 'ADMIN'
+    })
   }
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="mb-6">
-        <h2 className="text-2xl font-black text-slate-800">Hello!</h2>
-        <p className="text-slate-500 text-sm mt-1">Join the community</p>
+        <h2 className="text-2xl font-black text-slate-800">Get Started</h2>
+        <p className="text-slate-500 text-sm mt-1">Create an account for your company</p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <Input 
+          id="organizationName"
+          type="text" 
+          label="Company Name *"
+          placeholder="e.g. Acme Corp" 
+          icon={<Building2 className="w-5 h-5" />}
+          value={formData.organizationName}
+          onChange={handleChange}
+        />
+
+        <Input 
+          id="website"
+          type="url" 
+          label="Website Link"
+          placeholder="https://..." 
+          icon={<Building2 className="w-4 h-4" />}
+          value={formData.website}
+          onChange={handleChange}
+        />
+
+        <Input 
+          id="phone"
+          type="tel" 
+          label="Phone Number"
+          placeholder="+91..." 
+          icon={<Phone className="w-4 h-4" />}
+          value={formData.phone}
+          onChange={handleChange}
+        />
+
+        <Input 
           id="fullname"
           type="text" 
-          label="Full Name"
-          placeholder="Your names" 
+          label="Admin Name *"
+          placeholder="Your full name" 
           icon={<User className="w-5 h-5" />}
           value={formData.fullname}
           onChange={handleChange}
@@ -71,48 +100,29 @@ const SignupForm: React.FC = () => {
         <Input 
           id="email"
           type="email" 
-          label="Email Address"
-          placeholder="Enter email" 
+          label="Work Email Address *"
+          placeholder="name@company.com" 
           icon={<Mail className="w-5 h-5" />}
           value={formData.email}
           onChange={handleChange}
         />
 
         <Input 
-          id="phone"
-          type="tel" 
-          label="Phone Number"
-          placeholder="+91 XXXXX XXXXX" 
-          icon={<Phone className="w-5 h-5" />}
-          value={formData.phone}
-          onChange={handleChange}
-        />
-        
-        <Input 
           id="password"
           type="password" 
-          label="Password"
+          label="Password *"
           placeholder="••••••••" 
           icon={<Lock className="w-5 h-5" />}
           value={formData.password}
           onChange={handleChange}
         />
 
-        <Select 
-          id="role"
-          label="Select Role"
-          options={roleOptions}
-          icon={<Building2 className="w-5 h-5" />}
-          value={formData.role}
-          onChange={handleChange}
-        />
-
         <Button type="submit" className="w-full mt-4" size="lg" disabled={signupMutation.isPending}>
-          {signupMutation.isPending ? 'Joining...' : 'Join Us'}
+          {signupMutation.isPending ? 'Creating Account...' : 'Sign Up'}
         </Button>
       </form>
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 text-center border-t border-slate-100 pt-6">
         <p className="text-slate-500 text-sm font-medium">
           Already have an account? <Link to="/login" title="Log in" className="text-brand-primary font-black hover:underline transition-all">Login</Link>
         </p>

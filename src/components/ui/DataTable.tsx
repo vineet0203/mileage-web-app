@@ -26,6 +26,8 @@ export interface DataTableProps<T extends Record<string, unknown>> {
   pagination?: PaginationConfig | false
   className?: string
   emptyMessage?: string
+  isLoading?: boolean
+  hideHeader?: boolean
 }
 
 const alignClass = {
@@ -41,6 +43,8 @@ function DataTable<T extends Record<string, unknown>>({
   pagination = { pageSize: 10 },
   className,
   emptyMessage = 'No records found.',
+  isLoading,
+  hideHeader
 }: DataTableProps<T>) {
   const [internalPage, setInternalPage] = useState(1)
 
@@ -70,14 +74,18 @@ function DataTable<T extends Record<string, unknown>>({
   }, [data, currentPage, pageSize, pagination, isServerSide])
 
   return (
-    <div className={cn('bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden', className)}>
-      {title && (
+    <div className={cn(
+      'bg-white rounded-xl overflow-hidden', 
+      !hideHeader && 'border border-slate-200 shadow-sm',
+      className
+    )}>
+      {!hideHeader && title && (
         <div className="px-6 py-4 border-b border-slate-100">
           <h3 className="text-lg md:text-xl font-bold text-slate-800">{title}</h3>
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto relative min-h-[200px]">
         <table className="w-full text-left">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100">
@@ -97,11 +105,23 @@ function DataTable<T extends Record<string, unknown>>({
           </thead>
 
           <tbody>
-            {rows.length === 0 ? (
+            {isLoading ? (
+               <tr>
+                <td
+                  colSpan={columns.length}
+                  className="px-5 py-20 text-center text-sm text-slate-400"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-6 h-6 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
+                    <span>Loading data...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : rows.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-5 py-10 text-center text-sm text-slate-400"
+                  className="px-5 py-20 text-center text-sm text-slate-400 font-medium"
                 >
                   {emptyMessage}
                 </td>

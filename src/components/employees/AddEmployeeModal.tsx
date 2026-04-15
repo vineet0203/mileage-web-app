@@ -1,135 +1,170 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { Select } from "../ui/Select";
 import Modal from "../ui/Modal";
+import { useInviteEmployee, useEmployees } from "../../hooks/useEmployees";
+import { useAuthStore } from "../../store/useAuthStore";
+import { Mail, Building2, User as UserIcon, Briefcase, IdCard, Phone, Users } from "lucide-react";
 
-export interface NewEmployeeFormValues {
-  firstName: string;
-  lastName: string;
+interface FormState {
   email: string;
-  phone: string;
-  ssn: string;
+  fullname: string;
+  role: string;
   designation: string;
-  manager: string;
-  address: string;
-  mileageRate: string;
+  ssn: string;
+  phone: string;
+  manager_id: string;
 }
 
 interface AddEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (values: NewEmployeeFormValues) => void;
 }
-
-const initialFormState: NewEmployeeFormValues = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  ssn: "",
-  designation: "",
-  manager: "",
-  address: "",
-  mileageRate: "",
-};
 
 const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({
   isOpen,
   onClose,
-  onSubmit,
 }) => {
-  const [formValues, setFormValues] =
-    useState<NewEmployeeFormValues>(initialFormState);
+  const { user: currentUser } = useAuthStore();
+  const { data: employees } = useEmployees();
 
-  useEffect(() => {
-    if (isOpen) {
-      setFormValues(initialFormState);
-    }
-  }, [isOpen]);
+  const managers = useMemo(() => {
+    return employees?.filter(emp => emp.role === 'MANAGER') || [];
+  }, [employees]);
 
-  const handleChange = (key: keyof NewEmployeeFormValues, value: string) => {
-    setFormValues((prev) => ({ ...prev, [key]: value }));
+  const [formData, setFormData] = useState<FormState>({
+    email: "",
+    fullname: "",
+    role: "EMPLOYEE",
+    designation: "",
+    ssn: "",
+    phone: "",
+    manager_id: "",
+  });
+
+  const inviteMutation = useInviteEmployee();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.email || !formData.role) return;
+
+    // Send invitation with role and email. 
+    inviteMutation.mutate(
+      { 
+        email: formData.email, 
+        role: formData.role as 'MANAGER' | 'EMPLOYEE',
+        manager_id: formData.role === 'EMPLOYEE' ? (formData.manager_id || undefined) : undefined
+      },
+      {
+        onSuccess: () => {
+          setFormData({
+            email: "",
+            fullname: "",
+            role: "EMPLOYEE",
+            designation: "",
+            ssn: "",
+            phone: "",
+            manager_id: "",
+          });
+          onClose();
+        },
+      }
+    );
   };
 
-  const handleSubmit = () => {
-    onSubmit(formValues);
-    onClose();
-  };
+  const roleOptions = [
+    { value: 'EMPLOYEE', label: 'Employee' },
+    { value: 'MANAGER', label: 'Manager / Team Lead' },
+  ];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Add Employee"
-      className="max-w-4xl"
+      title="Invite Team Member"
+      className="max-w-2xl"
     >
-      <div className="space-y-6 px-6 py-8">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="First Name"
-            placeholder="First Name"
-            value={formValues.firstName}
-            onChange={(e) => handleChange("firstName", e.target.value)}
-          />
-          <Input
-            label="Last Name"
-            placeholder="Last Name"
-            value={formValues.lastName}
-            onChange={(e) => handleChange("lastName", e.target.value)}
-          />
-          <Input
-            label="Email ID"
-            placeholder="Email ID"
-            type="email"
-            value={formValues.email}
-            onChange={(e) => handleChange("email", e.target.value)}
-          />
-          <Input
-            label="Phone Number"
-            placeholder="Phone Number"
-            type="tel"
-            value={formValues.phone}
-            onChange={(e) => handleChange("phone", e.target.value)}
-          />
-          <Input
-            label="SSN Number"
-            placeholder="SSN Number"
-            value={formValues.ssn}
-            onChange={(e) => handleChange("ssn", e.target.value)}
-          />
-          <Input
-            label="Designation"
-            placeholder="Designation"
-            value={formValues.designation}
-            onChange={(e) => handleChange("designation", e.target.value)}
-          />
-          <Input
-            label="Reporting Manager"
-            placeholder="Reporting Manager"
-            value={formValues.manager}
-            onChange={(e) => handleChange("manager", e.target.value)}
-          />
-          <Input
-            label="Address"
-            placeholder="Address"
-            value={formValues.address}
-            onChange={(e) => handleChange("address", e.target.value)}
-          />
-          <Input
-            label="Mileage Rate"
-            placeholder="Mileage Rate"
-            value={formValues.mileageRate}
-            onChange={(e) => handleChange("mileageRate", e.target.value)}
-          />
-        </div>
-      </div>
+      <form onSubmit={handleSubmit} className="space-y-6 px-8 py-8">
+        <p className="text-sm text-slate-500">
+          Invite a team member by email. You can pre-fill their profile information below.
+        </p>
+        
+        <div className="grid gap-6 md:grid-cols-2">
+            <Input
+              label="Email Address *"
+              placeholder="colleague@company.com"
+              type="email"
+              icon={<Mail className="w-5 h-5 text-slate-400" />}
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+            />
 
-      <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button onClick={handleSubmit}>Submit</Button>
-      </div>
+            <Input
+              label="Full Name"
+              placeholder="e.g. Jhon Smith"
+              icon={<UserIcon className="w-5 h-5 text-slate-400" />}
+              value={formData.fullname}
+              onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
+            />
+
+            <Select
+              label="Assign Role *"
+              options={roleOptions}
+              icon={<Building2 className="w-5 h-5 text-slate-400" />}
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              required
+            />
+
+            {formData.role === 'EMPLOYEE' && currentUser?.role === 'ADMIN' && (
+              <Select
+                label="Reporting Manager"
+                options={[
+                  { value: '', label: 'None (Reports to Admin)' },
+                  ...managers.map(m => ({ value: m.id.toString(), label: m.fullname }))
+                ]}
+                icon={<Users className="w-5 h-5 text-slate-400" />}
+                value={formData.manager_id}
+                onChange={(e) => setFormData({ ...formData, manager_id: e.target.value })}
+              />
+            )}
+
+            <Input
+              label="Designation"
+              placeholder="e.g. AC Expert"
+              icon={<Briefcase className="w-5 h-5 text-slate-400" />}
+              value={formData.designation}
+              onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+            />
+
+            <Input
+              label="SSN Number"
+              placeholder="e.g. 1587"
+              icon={<IdCard className="w-5 h-5 text-slate-400" />}
+              value={formData.ssn}
+              onChange={(e) => setFormData({ ...formData, ssn: e.target.value })}
+            />
+
+            <Input
+              label="Phone"
+              placeholder="e.g. 9123456761"
+              icon={<Phone className="w-5 h-5 text-slate-400" />}
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            />
+        </div>
+
+        <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={inviteMutation.isPending}>
+            {inviteMutation.isPending ? 'Sending Invitation...' : 'Send Invitation'}
+          </Button>
+        </div>
+      </form>
     </Modal>
   );
 };

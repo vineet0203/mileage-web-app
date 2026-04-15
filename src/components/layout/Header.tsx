@@ -20,7 +20,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <Menu className="w-6 h-6 text-slate-600" />
         </button>
         <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
-          Hello {user?.fullname ? user.fullname.split(' ')[0] : (user?.email?.split('@')[0] || 'User')}
+          {user?.organization_name || (user?.email?.split('@')[0] || 'User')}
         </h2>
       </div>
 

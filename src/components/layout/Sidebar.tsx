@@ -120,12 +120,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </Button>
 
           <div className="flex items-center space-x-3 p-2">
-            <div className="w-10 h-10 rounded-xl bg-brand-secondary flex items-center justify-center overflow-hidden border border-white/10 font-bold text-white">
-              {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
+            <div className="w-10 h-10 rounded-xl bg-brand-secondary flex items-center justify-center overflow-hidden border border-white/10 font-bold text-white uppercase">
+              {(user?.fullname || user?.email || 'U').charAt(0)}
             </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-bold truncate">{user?.name || user?.email}</p>
-              <p className="text-[10px] text-slate-500 truncate cursor-pointer hover:text-brand-primary capitalize">{user?.role || 'User'}</p>
+              <p className="text-sm font-bold truncate">{user?.fullname || 'User'}</p>
+              <p className="text-[10px] text-slate-500 truncate cursor-default capitalize">
+                {user?.role?.toLowerCase() || 'Member'}
+              </p>
             </div>
           </div>
         </div>
