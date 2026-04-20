@@ -55,7 +55,7 @@ const Employees: React.FC = () => {
       key: 'id',
       header: 'Emp. ID',
       accessor: 'id',
-      render: (id: string) => <span className="text-slate-500 font-medium">#{id}</span>,
+      render: (id: any) => <span className="text-slate-500 font-medium">#{id}</span>,
       headerClassName: 'w-24',
     },
     {

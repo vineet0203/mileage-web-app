@@ -7,10 +7,22 @@ import { useUpdateEmployee, useEmployees } from "../../hooks/useEmployees";
 import { useAuthStore } from "../../store/useAuthStore";
 import { User, Briefcase, IdCard, Phone, Mail, Shield, Users } from "lucide-react";
 
+interface Employee {
+  id: string | number;
+  fullname: string;
+  email: string;
+  role: string;
+  designation?: string;
+  ssn?: string;
+  phone?: string;
+  manager_id?: string | number | null;
+  [key: string]: any;
+}
+
 interface EmployeeDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  employee: any;
+  employee: Employee | null;
 }
 
 const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
@@ -33,7 +45,7 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   const employees = data?.employees || [];
 
   const managers = useMemo(() => {
-    return employees.filter(emp => emp.role === 'MANAGER' || emp.role === 'ADMIN');
+    return (employees as Employee[]).filter(emp => emp.role === 'MANAGER' || emp.role === 'ADMIN');
   }, [employees]);
 
   useEffect(() => {
@@ -64,7 +76,7 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
     }
 
     updateMutation.mutate(
-      { id: employee.id, data: formData },
+      { id: employee.id.toString(), data: formData },
       {
         onSuccess: () => {
           onClose();
@@ -147,7 +159,7 @@ const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
             <Select
               id="manager_id"
               label="Reporting Manager"
-              options={managers.map(m => ({ 
+              options={managers.map((m: Employee) => ({ 
                 value: m.id.toString(), 
                 label: `${m.fullname} (${m.email})` 
               }))}

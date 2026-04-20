@@ -6,6 +6,14 @@ import Modal from "../ui/Modal";
 import { useInviteEmployee, useEmployees } from "../../hooks/useEmployees";
 import { Mail, Building2, User as UserIcon, Briefcase, IdCard, Phone, Users } from "lucide-react";
 
+interface Employee {
+  id: string | number;
+  fullname: string;
+  email: string;
+  role: string;
+  [key: string]: any;
+}
+
 interface FormState {
   email: string;
   fullname: string;
@@ -29,7 +37,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({
   const employees = data?.employees || [];
 
   const managers = useMemo(() => {
-    return employees.filter(emp => emp.role === 'MANAGER' || emp.role === 'ADMIN');
+    return (employees as Employee[]).filter(emp => emp.role === 'MANAGER' || emp.role === 'ADMIN');
   }, [employees]);
 
   const [formData, setFormData] = useState<FormState>({
@@ -137,7 +145,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({
             <Select
               id="manager_id"
               label="Reporting Manager"
-              options={managers.map(m => ({ 
+              options={managers.map((m: Employee) => ({ 
                 value: m.id.toString(), 
                 label: `${m.fullname} (${m.email})` 
               }))}
