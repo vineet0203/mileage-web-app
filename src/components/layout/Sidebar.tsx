@@ -71,14 +71,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       <aside
         className={cn(
-          "w-64 bg-slate-950 text-white flex flex-col h-screen fixed inset-y-0 left-0 z-[70] transform transition-transform duration-300 ease-in-out md:sticky md:top-0 md:translate-x-0 shadow-2xl md:shadow-none",
+          "w-64 bg-slate-950 text-white flex flex-col h-screen fixed inset-y-0 left-0 z-70 transform transition-transform duration-300 ease-in-out md:sticky md:top-0 md:translate-x-0 shadow-2xl md:shadow-none",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Close Button - Half-on half-off */}
         {isOpen && <button
           onClick={onClose}
-          className="md:hidden absolute -right-5 top-8 w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center shadow-lg border-4 border-slate-950 hover:scale-110 active:scale-95 transition-all z-[80]"
+          className="md:hidden absolute -right-5 top-8 w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center shadow-lg border-4 border-slate-950 hover:scale-110 active:scale-95 transition-all z-80"
           aria-label="Close Menu"
         >
           <X className="w-6 h-6" />
@@ -87,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {/* Logo */}
         <div className="py-8 px-4 flex items-center">
           <h1 className="text-xl font-black tracking-tight flex items-center gap-3">
-            <div className="w-8 h-8 bg-brand-primary rounded-lg flex-shrink-0 flex items-center justify-center p-1.5">
+            <div className="w-8 h-8 bg-brand-primary rounded-lg shrink-0 flex items-center justify-center p-1.5">
               <MileageRouteIcon className="w-full h-full text-white" />
             </div>
             <span>Mileage Tracking</span>
@@ -97,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {/* Navigation */}
         <nav className="flex-1 px-4 space-y-2">
           {navItems.map((item) => (
-             <NavItem
+            <NavItem
               key={item.href}
               href={item.href}
               icon={item.icon}

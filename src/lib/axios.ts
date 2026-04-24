@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
 // Access the backend at localhost for development
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+export const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export const apiClient = axios.create({
   baseURL,

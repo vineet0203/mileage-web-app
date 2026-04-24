@@ -23,6 +23,7 @@ export interface Trip {
   end_odometer_img?: string;
   extracted_distance: number | null;
   extracted_total_price: number | null;
+  [key: string]: any;
 }
 
 export const tripsApi = {
@@ -38,6 +39,11 @@ export const tripsApi = {
 
   updateTripStatus: async (id: number, status: 'APPROVED' | 'REJECTED') => {
     const response = await apiClient.patch(`/trips/${id}/status`, { status });
+    return response.data;
+  },
+
+  updateTripMetrics: async (id: number, data: { distance?: number; total_price?: number }) => {
+    const response = await apiClient.patch(`/trips/${id}/metrics`, data);
     return response.data;
   }
 };

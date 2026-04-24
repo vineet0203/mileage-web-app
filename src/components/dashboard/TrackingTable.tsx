@@ -15,10 +15,10 @@ const TrackingTable: React.FC = () => {
   const { user } = useAuthStore()
   const { enqueueSnackbar } = useSnackbar()
   const queryClient = useQueryClient()
-  
+
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
-  
+  const [selectedTripId, setSelectedTripId] = useState<number | null>(null)
+
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [confirmConfig, setConfirmConfig] = useState<{
     id: number;
@@ -38,7 +38,7 @@ const TrackingTable: React.FC = () => {
 
   // Update Status Mutation
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: 'APPROVED' | 'REJECTED' }) => 
+    mutationFn: ({ id, status }: { id: number; status: 'APPROVED' | 'REJECTED' }) =>
       tripsApi.updateTripStatus(id, status),
     onSuccess: (_, variables) => {
       enqueueSnackbar(`Trip ${variables.status.toLowerCase()} successfully`, { variant: 'success' })
@@ -63,7 +63,7 @@ const TrackingTable: React.FC = () => {
   }
 
   const handleView = (trip: Trip) => {
-    setSelectedTrip(trip)
+    setSelectedTripId(trip.id)
     setIsDetailsOpen(true)
   }
 
@@ -80,7 +80,7 @@ const TrackingTable: React.FC = () => {
       key: 'employee',
       header: 'Employee',
       accessor: 'employee_name',
-      render: (value, row) => (
+      render: (value,) => (
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl border border-slate-200 bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-400">
             {(value as string).charAt(0)}
@@ -165,7 +165,7 @@ const TrackingTable: React.FC = () => {
           onClick={() => handleView(row)}
           variant="ghost"
           size='sm'
-          >
+        >
           View
         </Button>
       ),
@@ -177,9 +177,9 @@ const TrackingTable: React.FC = () => {
       <TripDetailsModal
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
-        trip={selectedTrip}
-        onApprove={() => selectedTrip && openConfirm(selectedTrip.id, 'APPROVED')}
-        onReject={() => selectedTrip && openConfirm(selectedTrip.id, 'REJECTED')}
+        tripId={selectedTripId}
+        onApprove={() => selectedTripId && openConfirm(selectedTripId, 'APPROVED')}
+        onReject={() => selectedTripId && openConfirm(selectedTripId, 'REJECTED')}
       />
 
       <ConfirmationModal
