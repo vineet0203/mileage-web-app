@@ -3,11 +3,15 @@ import { Calendar, MapPin, Navigation, DollarSign } from "lucide-react";
 import Modal from "../ui/Modal";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/Button";
+import { useAuthStore } from "../../store/useAuthStore";
+import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { tripsApi, type Trip } from "../../lib/api/trips";
 
 interface TripDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  trip?: any;
+  trip?: Trip | null;
   onApprove?: () => void;
   onReject?: () => void;
 }
@@ -31,33 +35,27 @@ const InfoRow = ({
 );
 
 const HistoryItem = ({
-  date,
-  address,
-  hours,
-  amount,
-  status,
+  trip,
 }: {
-  date: string;
-  address: string;
-  hours: string;
-  amount: string;
-  status: string;
+  trip: Trip;
 }) => (
   <div className="flex items-start justify-between px-4 py-3 rounded-xl border border-slate-200 bg-white shadow-sm">
     <div className="space-y-0.5">
-      <p className="text-xs text-slate-400">{date}</p>
-      <p className="text-sm font-bold text-slate-800">{address}</p>
-      <p className="text-xs text-slate-400">Total Hours: {hours}</p>
+      <p className="text-[10px] text-slate-400 font-bold uppercase">{format(new Date(trip.created_at), 'MMMM dd, yyyy')}</p>
+      <p className="text-sm font-bold text-slate-800 truncate max-w-[140px]">{trip.title}</p>
+      <p className="text-[10px] text-slate-400 font-medium">{Number(trip.distance).toFixed(1)} km covered</p>
     </div>
     <div className="flex flex-col items-end gap-1 ml-4 shrink-0">
-      <span className="text-base font-bold text-slate-900">{amount}</span>
+      <span className="text-sm font-black text-slate-900">${Number(trip.total_price).toFixed(2)}</span>
       <span
         className={cn(
-          "text-xs font-semibold",
-          status === "Approved" ? "text-green-500" : "text-red-500",
+          "text-[9px] font-black uppercase tracking-tighter",
+          trip.status === "APPROVED" ? "text-green-500" :
+            trip.status === "REJECTED" ? "text-red-500" :
+              trip.status === "IN_PROGRESS" ? "text-blue-500" : "text-amber-500",
         )}
       >
-        {status}
+        {trip.status === 'COMPLETED_PENDING' ? 'Pending' : trip.status.replace('_', ' ')}
       </span>
     </div>
   </div>
@@ -70,14 +68,25 @@ const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
   onApprove,
   onReject,
 }) => {
+  const { user } = useAuthStore();
+  const isManagerOrAdmin = user?.role === 'MANAGER' || user?.role === 'ADMIN';
+  const canAction = isManagerOrAdmin && trip?.status === 'COMPLETED_PENDING';
+
+  // Fetch employee's other trips
+  const { data: historyResponse } = useQuery({
+    queryKey: ['trips', 'history', trip?.user_id],
+    queryFn: () => tripsApi.getTrips({ user_id: trip?.user_id, limit: 10 }),
+    enabled: !!trip?.user_id && isOpen,
+  });
+
+  const history = (historyResponse?.data || []).filter((t: Trip) => t.id !== trip?.id);
+
   const handleApprove = () => {
     onApprove?.();
-    onClose();
   };
 
   const handleReject = () => {
     onReject?.();
-    onClose();
   };
 
   return (
@@ -85,112 +94,141 @@ const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Trip Details"
-      className="max-w-4xl"
+      className="max-w-5xl"
     >
       <div className="flex flex-col lg:flex-row min-h-0 bg-slate-50">
-        <div className="flex-1 p-6 space-y-4 border-r border-slate-100">
-          <div className="flex items-center gap-3 pb-2">
-            <div className="w-9 h-9 bg-brand-primary/10 rounded-xl flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-brand-primary" />
-            </div>
-            <span className="text-base font-bold text-slate-800">
-              {trip?.date || "31 March, 2026"}
-            </span>
-          </div>
-
-          <div className="space-y-2.5">
-            <InfoRow
-              icon={MapPin}
-              label="Starting Address"
-              value="#234, Line one, City"
-            />
-            <InfoRow
-              icon={MapPin}
-              label="Ending Address"
-              value="#144, Dreamworld, Cty"
-            />
-            <InfoRow
-              icon={Navigation}
-              label="Actual Mileage"
-              value={`${trip?.totalMileage || "1.56"} Miles`}
-            />
-            <InfoRow
-              icon={DollarSign}
-              label="Price"
-              value={trip?.amount || "$500.00"}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <div className="space-y-2">
-              <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-900 aspect-video shadow-sm">
-                <img
-                  src="https://images.unsplash.com/photo-1542281286-9e0a16bb7366?auto=format&fit=crop&q=80&w=400"
-                  alt="Starting odometer"
-                  className="w-full h-full object-cover opacity-80"
-                />
+        <div className="flex-1 p-6 space-y-6 border-r border-slate-100">
+          {/* Header Info */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-brand-primary" />
               </div>
-              <p className="text-center text-xs font-semibold text-slate-500">
-                Starting Destination
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-900 aspect-video shadow-sm">
-                <img
-                  src="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=400"
-                  alt="Arrival odometer"
-                  className="w-full h-full object-cover opacity-80"
-                />
+              <div>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Trip Date</p>
+                <span className="text-base font-black text-slate-800">
+                  {trip?.created_at ? format(new Date(trip.created_at), 'MMMM dd, yyyy') : "N/A"}
+                </span>
               </div>
-              <p className="text-center text-xs font-semibold text-slate-500">
-                Arrival Destination
-              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center border border-slate-200 font-bold text-slate-400">
+                {trip?.employee_name?.charAt(0)}
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Employee</p>
+                <span className="text-sm font-bold text-slate-800">{trip?.employee_name}</span>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <Button onClick={handleApprove} variant="primary">
-              Approve
-            </Button>
-            <Button onClick={handleReject} variant="outline">
-              Reject
-            </Button>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <InfoRow
+                icon={MapPin}
+                label="Starting Location"
+                value={trip?.start_location_address || "N/A"}
+              />
+              <InfoRow
+                icon={MapPin}
+                label="Destination"
+                value={trip?.end_location_address || "Pending..."}
+              />
+              <InfoRow
+                icon={Navigation}
+                label="Total Distance"
+                value={`${Number(trip?.distance || 0).toFixed(1)} km`}
+              />
+              <InfoRow
+                icon={DollarSign}
+                label="Total Price"
+                value={`$${Number(trip?.total_price || 0).toFixed(2)}`}
+              />
+              <InfoRow
+                icon={Navigation}
+                label="Extracted Distance"
+                value={`${Number(trip?.extracted_distance || 0).toFixed(1)} km`}
+              />
+              <InfoRow
+                icon={DollarSign}
+                label="Extracted Price"
+                value={`$${Number(trip?.extracted_total_price || 0).toFixed(2)}`}
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Odometer Proofs</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                      {trip?.start_odometer_img ? (
+                        <img src={trip.start_odometer_img} alt="Start" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-400">No Image</div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-center font-bold text-slate-500 uppercase">Start</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                      {trip?.end_odometer_img ? (
+                        <img src={trip.end_odometer_img} alt="End" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-400">No Image</div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-center font-bold text-slate-500 uppercase">End</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Trip Title</h4>
+                <p className="text-sm font-bold text-slate-800">{trip?.title || "No title"}</p>
+                <p className="text-xs text-slate-500 mt-1">{trip?.description || "No description provided."}</p>
+              </div>
+            </div>
           </div>
+
+          {canAction && (
+            <div className="flex gap-3 pt-4">
+              <Button onClick={handleApprove} variant="primary" className="flex-1 py-4">
+                Approve Trip
+              </Button>
+              <Button onClick={handleReject} variant="outline" className="flex-1 py-4 text-red-500 hover:bg-red-50 hover:border-red-200">
+                Reject Trip
+              </Button>
+            </div>
+          )}
+
+          {!canAction && trip?.status !== 'IN_PROGRESS' && (
+            <div className={cn(
+              "p-4 rounded-xl text-center font-bold text-sm",
+              trip?.status === 'APPROVED' ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+            )}>
+              This trip has been {trip?.status?.toLowerCase()}
+            </div>
+          )}
         </div>
 
-        <div className="w-full lg:w-72 p-6 flex flex-col gap-4 shrink-0 bg-slate-50/50">
-          <h3 className="text-base font-bold text-slate-800">Ride History</h3>
+        <div className="w-full lg:w-80 p-6 flex flex-col gap-4 shrink-0 bg-slate-50/50">
+          <h3 className="text-base font-bold text-slate-800">Employee Ride History</h3>
 
-          <div className="space-y-3 overflow-y-auto pr-1">
-            <HistoryItem
-              date="April 1, 2026"
-              address="123 Oak Ave."
-              hours="1:30 Hours"
-              amount="$50:00"
-              status="Approved"
-            />
-            <HistoryItem
-              date="April 2, 2026"
-              address="123 Oak Ave."
-              hours="1:30 Hours"
-              amount="$50:00"
-              status="Approved"
-            />
-            <HistoryItem
-              date="April 3, 2026"
-              address="123 Oak Ave."
-              hours="1:30 Hours"
-              amount="$50:00"
-              status="Approved"
-            />
-            <HistoryItem
-              date="April 4, 2026"
-              address="123 Oak Ave."
-              hours="1:30 Hours"
-              amount="$50:00"
-              status="Approved"
-            />
+          <div className="space-y-3 overflow-y-auto pr-1 max-h-[600px] custom-scrollbar">
+            {history.map((t: Trip) => (
+              <HistoryItem key={t.id} trip={t} />
+            ))}
+
+            {history.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3">
+                  <Navigation className="w-6 h-6 text-slate-300" />
+                </div>
+                <p className="text-xs text-slate-400 font-medium">No other trips found <br /> for this employee.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

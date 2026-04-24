@@ -2,71 +2,89 @@ import React, { useState } from 'react'
 import { cn } from '../../lib/utils'
 import DataTable, { type ColumnDef } from '../ui/DataTable'
 import TripDetailsModal from './TripDetailsModal'
+import ConfirmationModal from '../ui/ConfirmationModal'
 import { Button } from '../ui/Button'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface TrackingRow extends Record<string, unknown> {
-  id: string
-  date: string
-  employee: string
-  employeeImg: string
-  jobName: string
-  totalMileage: number
-  amount: string
-  status: 'Pending' | 'Approved' | 'Rejected'
-}
-
-// ─── Mock Data (50 rows) ─────────────────────────────────────────────────────
-const ALL_DATA: TrackingRow[] = Array.from({ length: 50 }, (_, i) => ({
-  id: String(i + 1),
-  date: '15-02-2026',
-  employee: 'Jhon Smith',
-  employeeImg: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jhon',
-  jobName: 'Ac Repair at Residence',
-  totalMileage: 15,
-  amount: '$30:00',
-  status: 'Pending' as const,
-}))
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { tripsApi, type Trip } from '../../lib/api/trips'
+import { useAuthStore } from '../../store/useAuthStore'
+import { useSnackbar } from 'notistack'
+import { format } from 'date-fns'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const TrackingTable: React.FC = () => {
-  const [isModalOpen, setIsModalOpen]   = useState(false)
-  const [selectedTrip, setSelectedTrip] = useState<TrackingRow | null>(null)
+  const { user } = useAuthStore()
+  const { enqueueSnackbar } = useSnackbar()
+  const queryClient = useQueryClient()
+  
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
+  
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [confirmConfig, setConfirmConfig] = useState<{
+    id: number;
+    status: 'APPROVED' | 'REJECTED';
+    title: string;
+    message: string;
+    variant: 'primary' | 'danger';
+  } | null>(null)
 
-  // Per-row approve/reject override
-  const [rowStatuses, setRowStatuses]   = useState<Record<string, TrackingRow['status']>>({})
+  // Fetch trips
+  const { data: tripsResponse, isLoading } = useQuery({
+    queryKey: ['trips'],
+    queryFn: () => tripsApi.getTrips(),
+  })
 
-  const getStatus = (row: TrackingRow): TrackingRow['status'] =>
-    rowStatuses[row.id] ?? row.status
+  const trips = tripsResponse?.data || []
 
-  const handleApprove = (id: string) =>
-    setRowStatuses(prev => ({ ...prev, [id]: 'Approved' }))
+  // Update Status Mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: 'APPROVED' | 'REJECTED' }) => 
+      tripsApi.updateTripStatus(id, status),
+    onSuccess: (_, variables) => {
+      enqueueSnackbar(`Trip ${variables.status.toLowerCase()} successfully`, { variant: 'success' })
+      queryClient.invalidateQueries({ queryKey: ['trips'] })
+      setIsConfirmOpen(false)
+      setIsDetailsOpen(false)
+    },
+    onError: (error: any) => {
+      enqueueSnackbar(error.response?.data?.message || 'Failed to update trip status', { variant: 'error' })
+    }
+  })
 
-  const handleReject = (id: string) =>
-    setRowStatuses(prev => ({ ...prev, [id]: 'Rejected' }))
-
-  const handleView = (row: TrackingRow) => {
-    setSelectedTrip(row)
-    setIsModalOpen(true)
+  const openConfirm = (id: number, status: 'APPROVED' | 'REJECTED') => {
+    setConfirmConfig({
+      id,
+      status,
+      title: status === 'APPROVED' ? 'Approve Trip' : 'Reject Trip',
+      message: `Are you sure you want to ${status.toLowerCase()} this trip? This action cannot be undone.`,
+      variant: status === 'APPROVED' ? 'primary' : 'danger'
+    })
+    setIsConfirmOpen(true)
   }
 
-  const columns: ColumnDef<TrackingRow>[] = [
+  const handleView = (trip: Trip) => {
+    setSelectedTrip(trip)
+    setIsDetailsOpen(true)
+  }
+
+  const isManagerOrAdmin = user?.role === 'MANAGER' || user?.role === 'ADMIN'
+
+  const columns: ColumnDef<Trip>[] = [
     {
       key: 'date',
       header: 'Date',
-      accessor: 'date',
+      accessor: 'created_at',
+      render: (value) => format(new Date(value as string), 'dd-MM-yyyy')
     },
     {
       key: 'employee',
       header: 'Employee',
-      accessor: 'employee',
+      accessor: 'employee_name',
       render: (value, row) => (
         <div className="flex items-center gap-2.5">
-          <img
-            src={row.employeeImg as string}
-            alt={value as string}
-            className="w-8 h-8 rounded-xl border border-slate-200 bg-slate-100"
-          />
+          <div className="w-8 h-8 rounded-xl border border-slate-200 bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-400">
+            {(value as string).charAt(0)}
+          </div>
           <span className="text-sm font-medium text-slate-800 whitespace-nowrap">
             {value as string}
           </span>
@@ -76,38 +94,39 @@ const TrackingTable: React.FC = () => {
     {
       key: 'jobName',
       header: 'Job Name',
-      accessor: 'jobName',
+      accessor: 'title',
     },
     {
       key: 'totalMileage',
-      header: 'Total Milage',
-      accessor: 'totalMileage',
+      header: 'Total Mileage',
+      accessor: 'distance',
+      render: (value) => `${Number(value).toFixed(1)} km`,
       className: 'font-medium text-slate-800',
     },
     {
       key: 'amount',
       header: 'Amount',
-      accessor: 'amount',
+      accessor: 'total_price',
+      render: (value) => `$${Number(value).toFixed(2)}`,
       className: 'font-medium text-slate-800',
     },
     {
       key: 'status',
       header: 'Status',
-      accessor: 'id',
-      render: (_value, row) => {
-        const status = getStatus(row)
-        if (status === 'Pending') {
+      accessor: 'status',
+      render: (status, row) => {
+        if (status === 'COMPLETED_PENDING' && isManagerOrAdmin) {
           return (
             <div className="flex items-center gap-1.5">
               <Button
-                onClick={() => handleApprove(row.id)}
+                onClick={() => openConfirm(row.id, 'APPROVED')}
                 variant="primary"
                 size='sm'
               >
                 Approve
               </Button>
               <Button
-                onClick={() => handleReject(row.id)}
+                onClick={() => openConfirm(row.id, 'REJECTED')}
                 variant="outline"
                 size='sm'
               >
@@ -116,14 +135,22 @@ const TrackingTable: React.FC = () => {
             </div>
           )
         }
+
+        const statusMap = {
+          'IN_PROGRESS': { label: 'In Progress', classes: 'bg-blue-50 text-blue-600' },
+          'COMPLETED_PENDING': { label: 'Pending Approval', classes: 'bg-amber-50 text-amber-600' },
+          'APPROVED': { label: 'Approved', classes: 'bg-green-50 text-green-600' },
+          'REJECTED': { label: 'Rejected', classes: 'bg-red-50 text-red-500' },
+        }
+
+        const config = statusMap[status as keyof typeof statusMap] || { label: status, classes: 'bg-slate-50 text-slate-500' }
+
         return (
           <span className={cn(
-            'px-3 py-1 text-xs font-semibold rounded-xl',
-            status === 'Approved'
-              ? 'bg-green-50 text-green-600'
-              : 'bg-red-50 text-red-500',
+            'px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full',
+            config.classes,
           )}>
-            {status}
+            {config.label}
           </span>
         )
       },
@@ -148,19 +175,32 @@ const TrackingTable: React.FC = () => {
   return (
     <>
       <TripDetailsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
         trip={selectedTrip}
-        onApprove={() => selectedTrip && handleApprove(selectedTrip.id)}
-        onReject={() => selectedTrip && handleReject(selectedTrip.id)}
+        onApprove={() => selectedTrip && openConfirm(selectedTrip.id, 'APPROVED')}
+        onReject={() => selectedTrip && openConfirm(selectedTrip.id, 'REJECTED')}
       />
 
-      <DataTable<TrackingRow>
-        columns={columns}
-        data={ALL_DATA}
-        title="Employee Tracking Details"
-        pagination={{ pageSize: 8 }}
+      <ConfirmationModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => confirmConfig && updateStatusMutation.mutate({ id: confirmConfig.id, status: confirmConfig.status })}
+        title={confirmConfig?.title || ''}
+        message={confirmConfig?.message || ''}
+        variant={confirmConfig?.variant}
+        isLoading={updateStatusMutation.isPending}
       />
+
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <DataTable<Trip>
+          columns={columns}
+          data={trips}
+          title="Employee Tracking Details"
+          pagination={{ pageSize: 10 }}
+          isLoading={isLoading}
+        />
+      </div>
     </>
   )
 }

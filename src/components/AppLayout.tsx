@@ -14,9 +14,9 @@ const AppLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
-        
+
         <main className="flex-1 p-8 overflow-auto">
-          <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+          <div className="space-y-8 animate-in fade-in duration-700">
             <Outlet />
           </div>
         </main>

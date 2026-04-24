@@ -4,13 +4,16 @@ import { useSnackbar } from "notistack";
 import RoutesList from "../components/routeconfig/RoutesList";
 import CreateRouteForm from "../components/routeconfig/CreateRouteForm";
 import Search from "../components/ui/Search";
-import { routesApi, type TravelRoute,  } from "../lib/api/routes";
+import { routesApi, type TravelRoute, } from "../lib/api/routes";
+import { useAuthStore } from "../store/useAuthStore";
+import { cn } from "../lib/utils";
 
 const RouteConfiguration: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const { user } = useAuthStore()
 
   // Handle Search Debouncing (delay api call for 300ms while user types)
   useEffect(() => {
@@ -45,8 +48,10 @@ const RouteConfiguration: React.FC = () => {
     createMutation.mutate(formData);
   };
 
+  const isEmployee = user?.role === "EMPLOYEE";
+
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)]">
+    <div className="flex flex-col">
       {/* Title and Search section - Sticky at top */}
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between pb-6 bg-[#F8FAFC] z-10">
         <div>
@@ -57,15 +62,18 @@ const RouteConfiguration: React.FC = () => {
             Manage routes and destination mappings.
           </p>
         </div>
-        
-        <Search 
-          placeholder="Search routes..." 
+
+        <Search
+          placeholder="Search routes..."
           onSearch={setSearchQuery}
           className="w-full md:max-w-md"
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[40%_60%] items-start flex-1 overflow-hidden min-h-0">
+      <div className={cn(
+        "grid gap-6 items-start flex-1 overflow-hidden min-h-0",
+        isEmployee ? "grid-cols-1 max-w-3xl mx-auto w-full" : "lg:grid-cols-[40%_60%]"
+      )}>
         <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
           {isLoading ? (
             <div className="text-center py-10 text-slate-500">Loading routes...</div>
@@ -75,9 +83,11 @@ const RouteConfiguration: React.FC = () => {
             <RoutesList routes={routes} />
           )}
         </div>
-        <div className="lg:sticky lg:top-0">
-          <CreateRouteForm onSubmit={handleCreateRoute} isPending={createMutation.isPending} />
-        </div>
+        {!isEmployee && (
+          <div className="lg:sticky lg:top-0">
+            <CreateRouteForm onSubmit={handleCreateRoute} isPending={createMutation.isPending} />
+          </div>
+        )}
       </div>
     </div>
   );
