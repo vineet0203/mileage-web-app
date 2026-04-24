@@ -45,5 +45,10 @@ export const tripsApi = {
   updateTripMetrics: async (id: number, data: { distance?: number; total_price?: number }) => {
     const response = await apiClient.patch(`/trips/${id}/metrics`, data);
     return response.data;
+  },
+  
+  getTripStats: async () => {
+    const response = await apiClient.get('/trips/stats');
+    return response.data;
   }
 };

@@ -43,6 +43,7 @@ const TrackingTable: React.FC = () => {
     onSuccess: (_, variables) => {
       enqueueSnackbar(`Trip ${variables.status.toLowerCase()} successfully`, { variant: 'success' })
       queryClient.invalidateQueries({ queryKey: ['trips'] })
+      queryClient.invalidateQueries({ queryKey: ['tripStats'] })
       setIsConfirmOpen(false)
       setIsDetailsOpen(false)
     },

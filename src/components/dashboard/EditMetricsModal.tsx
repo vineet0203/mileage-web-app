@@ -32,6 +32,7 @@ const EditMetricsModal: React.FC<EditMetricsModalProps> = ({ isOpen, onClose, tr
     onSuccess: () => {
       enqueueSnackbar('Trip metrics updated successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['trips'] });
+      queryClient.invalidateQueries({ queryKey: ['tripStats'] });
       // Also invalidate details if we had a specific details query
       queryClient.invalidateQueries({ queryKey: ['trip', trip?.id] });
       onClose();
