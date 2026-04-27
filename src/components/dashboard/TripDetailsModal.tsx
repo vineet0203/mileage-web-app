@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, MapPin, Navigation, DollarSign, Edit2 } from "lucide-react";
+import { Calendar, MapPin, Navigation, DollarSign, Edit2, Route } from "lucide-react";
 import Modal from "../ui/Modal";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/Button";
@@ -20,10 +20,18 @@ interface TripDetailsModalProps {
 
 const getImgUrl = (path: string | undefined | null) => {
   if (!path) return null;
-  if (path.startsWith('http')) return path;
-  // Ensure we don't double slash
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${baseURL}${cleanPath}`;
+  try {
+    // Full URL — extract just the pathname so stale hosts are stripped
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      const { pathname } = new URL(path);
+      return `${baseURL}${pathname}`;
+    }
+    // Relative path — prepend base URL
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${baseURL}${cleanPath}`;
+  } catch {
+    return path;
+  }
 };
 
 const InfoRow = ({
@@ -191,16 +199,28 @@ const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
                     label="Total Price"
                     value={`$${Number(trip?.total_price || 0).toFixed(2)}`}
                   />
-                  <InfoRow
-                    icon={Navigation}
-                    label="Extracted Distance"
-                    value={`${Number(trip?.extracted_distance || 0).toFixed(1)} km`}
-                  />
-                  <InfoRow
-                    icon={DollarSign}
-                    label="Extracted Price"
-                    value={`$${Number(trip?.extracted_total_price || 0).toFixed(2)}`}
-                  />
+                  {/* Odometer Reading — start & end in a single box */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-slate-200 border-l-4 border-l-brand-primary shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <Navigation className="w-4 h-4 text-brand-primary shrink-0" />
+                      <span className="text-sm text-slate-500">Odometer Reading</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-sm font-bold text-slate-800">
+                      <div className="flex flex-col items-center">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Start</span>
+                        <span>{Number(trip?.start_mileage ?? 0).toLocaleString()}</span>
+                      </div>
+                      <span className="text-slate-300 text-xs font-normal">→</span>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">End</span>
+                        <span>
+                          {trip?.end_mileage != null
+                            ? Number(trip.end_mileage).toLocaleString()
+                            : <span className="text-slate-400 text-xs font-normal italic">Pending</span>}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -234,6 +254,21 @@ const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Trip Title</h4>
                     <p className="text-sm font-bold text-slate-800">{trip?.title || "No title"}</p>
                     <p className="text-xs text-slate-500 mt-1">{trip?.description || "No description provided."}</p>
+                  </div>
+
+                  {/* Route Details Card */}
+                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Route className="w-3.5 h-3.5 text-brand-primary" />
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Route</h4>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold text-slate-800">{trip?.route_name || "N/A"}</p>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-black">
+                        <DollarSign className="w-3 h-3" />
+                        {Number(trip?.route_rate ?? 0).toFixed(2)} / km
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -98,11 +98,29 @@ const TrackingTable: React.FC = () => {
       accessor: 'title',
     },
     {
-      key: 'totalMileage',
-      header: 'Total Mileage',
-      accessor: 'distance',
-      render: (value) => `${Number(value).toFixed(1)} km`,
-      className: 'font-medium text-slate-800',
+      key: 'mileage',
+      header: 'Mileage',
+      accessor: 'start_mileage',
+      render: (_value, row) => (
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-1.5 text-sm font-medium text-slate-800 whitespace-nowrap">
+            <span className="text-[10px] font-bold text-slate-400 uppercase">Start</span>
+            <span>{Number(row.start_mileage).toLocaleString()}</span>
+            <span className="text-slate-300 text-xs">→</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase">End</span>
+            <span>
+              {row.end_mileage != null
+                ? Number(row.end_mileage).toLocaleString()
+                : <span className="text-slate-400 text-xs font-normal italic">Pending</span>}
+            </span>
+          </div>
+          {row.end_mileage != null && (
+            <span className="text-[10px] text-slate-400 font-medium">
+              {Number(row.distance).toFixed(1)} km total
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'amount',

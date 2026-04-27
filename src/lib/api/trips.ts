@@ -15,14 +15,14 @@ export interface Trip {
   start_time: string;
   end_time: string | null;
   status: 'IN_PROGRESS' | 'COMPLETED_PENDING' | 'APPROVED' | 'REJECTED';
+  start_mileage: number;
+  end_mileage: number | null;
   distance: number;
   total_price: number;
   created_at: string;
   updated_at: string;
-  start_odometer_img?: string;
-  end_odometer_img?: string;
-  extracted_distance: number | null;
-  extracted_total_price: number | null;
+  start_odometer_img?: string | null;
+  end_odometer_img?: string | null;
   [key: string]: any;
 }
 
