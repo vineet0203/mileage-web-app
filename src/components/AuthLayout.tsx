@@ -1,5 +1,5 @@
 import React from 'react'
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 import { MileageRouteIcon } from './ui/Icons'
 
 const AuthLayout: React.FC = () => {
@@ -23,9 +23,14 @@ const AuthLayout: React.FC = () => {
       </div>
 
       {/* Right Part - Form Section */}
-      <div className="w-full md:w-[40%] flex items-center justify-center p-6 md:p-12">
+      <div className="w-full md:w-[40%] flex flex-col items-center justify-center p-6 md:p-12 relative">
         <div className="w-full max-w-sm bg-white p-8 md:p-10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 animate-in fade-in zoom-in-95 duration-700">
           <Outlet />
+        </div>
+        <div className="mt-8 md:absolute md:bottom-8">
+          <Link to="/privacy-policy" className="text-xs text-slate-400 hover:text-brand-primary transition-colors font-medium">
+            Privacy Policy
+          </Link>
         </div>
       </div>
     </div>

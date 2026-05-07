@@ -13,12 +13,19 @@ import AcceptInviteForm from './components/auth/AcceptInviteForm'
 import Dashboard from './pages/Dashboard'
 import Employees from './pages/Employees'
 import RouteConfiguration from './pages/RouteConfiguration'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 
 /**
  * Type-safe route definitions for the application.
  * Implements bidirectional redirection based on auth status.
  */
 export const routes: RouteObject[] = [
+  // Static Public Pages
+  {
+    path: '/privacy-policy',
+    element: <PrivacyPolicy />,
+  },
+
   // Authentication sector (Public only)
   {
     path: '/',
