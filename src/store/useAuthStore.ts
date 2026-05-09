@@ -12,6 +12,7 @@ interface User {
   organization_id?: number
   organization_name?: string
   manager_id?: number
+  profile_image?: string | null
 }
 
 interface AuthState {
