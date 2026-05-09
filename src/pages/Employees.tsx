@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react'
 import type { ColumnDef } from '../components/ui/DataTable'
 import { Button } from '../components/ui/Button'
 import DataTable from '../components/ui/DataTable'
+import Avatar from '../components/ui/Avatar'
 import AddEmployeeModal from '../components/employees/AddEmployeeModal'
 import EmployeeDetailsModal from '../components/employees/EmployeeDetailsModal'
 import Search from '../components/ui/Search'
@@ -22,6 +23,7 @@ interface EmployeeRow extends Record<string, unknown> {
   manager_name: string | null
   is_verified: number
   created_at: string
+  profile_image: string | null
 }
 
 const Employees: React.FC = () => {
@@ -62,15 +64,9 @@ const Employees: React.FC = () => {
       key: 'name',
       header: 'Employee Name',
       accessor: 'fullname',
-      render: (value) => (
+      render: (value, row) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 overflow-hidden">
-            <img 
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${value}`} 
-              alt="avatar" 
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <Avatar src={row.profile_image} name={value as string} />
           <span className="font-bold text-slate-900">{value as string}</span>
         </div>
       ),

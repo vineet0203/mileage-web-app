@@ -1,5 +1,5 @@
 import React from 'react'
-import { Bell, Menu } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import { useAuthStore } from '../../store/useAuthStore'
 
 interface HeaderProps {
@@ -24,12 +24,12 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         </h2>
       </div>
 
-      <div className="flex items-center space-x-4">
+      {/* <div className="flex items-center space-x-4">
         <button className="relative w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-xl transition-colors">
           <Bell className="w-6 h-6 text-slate-500" />
           <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
-      </div>
+      </div> */}
     </header>
   )
 }

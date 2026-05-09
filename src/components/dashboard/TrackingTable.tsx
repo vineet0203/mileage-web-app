@@ -4,6 +4,7 @@ import DataTable, { type ColumnDef } from '../ui/DataTable'
 import TripDetailsModal from './TripDetailsModal'
 import ConfirmationModal from '../ui/ConfirmationModal'
 import { Button } from '../ui/Button'
+import Avatar from '../ui/Avatar'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { tripsApi, type Trip } from '../../lib/api/trips'
 import { useAuthStore } from '../../store/useAuthStore'
@@ -81,11 +82,9 @@ const TrackingTable: React.FC = () => {
       key: 'employee',
       header: 'Employee',
       accessor: 'employee_name',
-      render: (value,) => (
+      render: (value, row) => (
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl border border-slate-200 bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-400">
-            {(value as string).charAt(0)}
-          </div>
+          <Avatar src={row.profile_image} name={value as string} />
           <span className="text-sm font-medium text-slate-800 whitespace-nowrap">
             {value as string}
           </span>

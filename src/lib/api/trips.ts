@@ -23,6 +23,7 @@ export interface Trip {
   updated_at: string;
   start_odometer_img?: string | null;
   end_odometer_img?: string | null;
+  profile_image?: string | null;
   [key: string]: any;
 }
 

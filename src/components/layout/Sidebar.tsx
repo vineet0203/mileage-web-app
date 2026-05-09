@@ -5,6 +5,7 @@ import { MileageRouteIcon } from '../ui/Icons'
 import { cn } from '../../lib/utils'
 import { useAuthStore } from '../../store/useAuthStore'
 import { Button } from '../ui/Button'
+import { baseURL } from '../../lib/axios'
 import { authApi } from '../../lib/api/auth'
 import { useSnackbar } from 'notistack'
 
@@ -121,7 +122,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
           <div className="flex items-center space-x-3 p-2">
             <div className="w-10 h-10 rounded-xl bg-brand-secondary flex items-center justify-center overflow-hidden border border-white/10 font-bold text-white uppercase">
-              {(user?.fullname || user?.email || 'U').charAt(0)}
+              {user?.profile_image ? (
+                <img 
+                  src={`${baseURL}${user.profile_image}`} 
+                  alt="avatar" 
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                (user?.fullname || user?.email || 'U').charAt(0)
+              )}
             </div>
             <div className="overflow-hidden">
               <p className="text-sm font-bold truncate">{user?.fullname || 'User'}</p>
